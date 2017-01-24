@@ -42,7 +42,7 @@ public class App {
     public static void main( String[] args ) throws IOException {
         try {
             System.out.println("Hello World!");
-            String filePath = "C:\\Users\\tzachi.gratziani\\Desktop\\aws-openvpn-cf.json";
+            String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\aerospike-cf-hvm-private.json";
             ViolationHelper violation = new ViolationHelper();
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
             for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  cf.securityGroupRules.entrySet()) {
