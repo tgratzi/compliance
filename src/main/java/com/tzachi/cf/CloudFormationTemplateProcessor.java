@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.mifmif.common.regex.Generex;
 import com.tzachi.cf.dataTypes.json.SecurityGroup;
+import nl.flotsam.xeger.Xeger;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
@@ -19,12 +21,13 @@ public class CloudFormationTemplateProcessor {
     private final static Set<String> MANDATORY_SG_KEYS = new HashSet<String>(Arrays.asList(new String[] {"IpProtocol", "FromPort", "ToPort", "CidrIp"}));
     private ObjectMapper objectMapper = new ObjectMapper();
     public Map<String, List<SecurityGroup>> securityGroupRules;
+    private final String jsonString;
 
     public CloudFormationTemplateProcessor(String file) throws IOException {
         JSONParser parser = new JSONParser();
         try {
-            String jsonString = parser.parse(new FileReader(file)).toString();
-            JsonNode resourcesRoot = objectMapper.readTree(jsonString).get("Resources");
+            this.jsonString = parser.parse(new FileReader(file)).toString();
+            JsonNode resourcesRoot = objectMapper.readTree(this.jsonString).get("Resources");
             this.securityGroupRules = processSecurityGroup(resourcesRoot);
         } catch (ParseException ex) {
             throw new IOException("Failed to parse file name " + file);
@@ -58,7 +61,6 @@ public class CloudFormationTemplateProcessor {
         if (! securityGroupNodes.isNull()) {
             for (JsonNode securityGroupNode: securityGroupNodes){
                 JsonNode processedSecurityGroupNode = validateMandatoryFields(securityGroupNode);
-                System.out.println(processedSecurityGroupNode.size());
                 if (processedSecurityGroupNode.size() == 0) {
                     System.out.println("Failed to find mandatory field");
                     continue;
@@ -75,27 +77,43 @@ public class CloudFormationTemplateProcessor {
         return securityGroups;
     }
 
-    private JsonNode validateMandatoryFields(JsonNode securityGroupNode) {
+    private JsonNode validateMandatoryFields(JsonNode securityGroupNode) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode root = mapper.createObjectNode();
         for (String key: MANDATORY_SG_KEYS) {
             if (securityGroupNode.has(key) && ! securityGroupNode.get(key).isNull()) {
-                if (securityGroupNode.get(key) instanceof ObjectNode) {
-                    String value = getObjectValue(securityGroupNode.get(key));
+                String protocol = securityGroupNode.get(key).toString().replaceAll("\"", "");
+                if ((key.equalsIgnoreCase("IpProtocol") && protocol.equalsIgnoreCase("icmp")) || (securityGroupNode.get(key) instanceof ObjectNode)) {
+//                    String value = getObjectValue(securityGroupNode.get(key));
+                    return mapper.createObjectNode();
                 }
                 root.set(key, mapper.convertValue(securityGroupNode.get(key), JsonNode.class));
                 continue;
             }
             return mapper.createObjectNode();
         }
-        System.out.println(root.toString());
         return root;
     }
 
-    private String getObjectValue(JsonNode node) {
+    private String getObjectValue(JsonNode node) throws IOException{
         System.out.println(node.toString());
         String refValue = node.get("Ref").textValue();
         System.out.println(refValue);
+        JsonNode cidrIpRefData = objectMapper.readTree(this.jsonString).findValue(refValue);
+        System.out.println(cidrIpRefData);
+        String regex = cidrIpRefData.get("AllowedPattern").toString();
+//        regex = regex.trim().replaceAll("^ | $|\\n ", "").replace(regex.substring(regex.length()-2), "")
+        regex = regex.replaceAll("^ | $|\\n ", "").substring(2, regex.length()-2);
+        System.out.println("regex = " + regex);
+//        Generex generex = new Generex("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(/([0-9]|[1-2][0-9]|3[0-2]))");
+//        // Generate all String that matches the given Regex.
+//        List<String> matchedStrs = generex.getAllMatchedStrings();
+//        System.out.println(matchedStrs.toString());
+//        String secondString = generex.getMatchedString(1);
+//        System.out.println(secondString);// it print '0b'
+        Xeger generator = new Xeger(regex);
+        String result = generator.generate();
+        System.out.println(result);
         return "";
     }
 }

@@ -27,10 +27,10 @@ public class App {
         instanceLogger = complianceLog.getLogger();
     }
 
-    private static String formatMessage(String securityGroupName, AccessRequest accessRequest) {
+    private static String formatMessage(String securityGroupName, AccessRequest accessRequest, String status) {
         StringBuffer errorMsg = new StringBuffer();
         errorMsg.append("----------------------------------------------------------------------").append('\n');
-        errorMsg.append("VIOLATION WAS FOUND").append('\n');
+        errorMsg.append("Status: ").append(status).append('\n');
         errorMsg.append("Security Group: ").append(securityGroupName).append('\n');
         errorMsg.append("Source: ").append(accessRequest.getSource()).append('\n');
         errorMsg.append("Destination: ").append(accessRequest.getDestination()).append('\n');
@@ -44,6 +44,7 @@ public class App {
             System.out.println("Hello World!");
             String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\aerospike-cf-hvm-private.json";
             ViolationHelper violation = new ViolationHelper();
+            System.out.println("Parsing Cloudformationtemplate");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
             for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  cf.securityGroupRules.entrySet()) {
                 JaxbAccessRequestBuilder rule = new JaxbAccessRequestBuilder(securityGroupRule);
@@ -51,9 +52,13 @@ public class App {
                     String accessRequestStr = rule.accessRequestBuilder(ar);
                     HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
                     SecurityPolicyViolationsForMultiArDTO violationMultiAr = violation.checkUSPAccessRequestViolation(stHelper, accessRequestStr);
+                    String statusMsg;
                     if (violationMultiAr.getSecurityPolicyViolationsForAr().isViolated()) {
-                        System.out.println(formatMessage(securityGroupRule.getKey(), ar));
+                        statusMsg = "VIOLATION FOUND";
+                        throw new IOException(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
                     }
+                    statusMsg = "No violation found";
+                    System.out.println(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
                 }
             }
             System.out.println("No violations were found, good to go");
