@@ -83,9 +83,11 @@ public class CloudFormationTemplateProcessor {
         for (String key: MANDATORY_SG_KEYS) {
             if (securityGroupNode.has(key) && ! securityGroupNode.get(key).isNull()) {
                 String protocol = securityGroupNode.get(key).toString().replaceAll("\"", "");
-                if ((key.equalsIgnoreCase("IpProtocol") && protocol.equalsIgnoreCase("icmp")) || (securityGroupNode.get(key) instanceof ObjectNode)) {
-//                    String value = getObjectValue(securityGroupNode.get(key));
+                if ((key.equalsIgnoreCase("IpProtocol") && protocol.equalsIgnoreCase("icmp"))) {
                     return mapper.createObjectNode();
+                }
+                if (securityGroupNode.get(key) instanceof ObjectNode) {
+                    String value = getObjectValue(securityGroupNode.get(key));
                 }
                 root.set(key, mapper.convertValue(securityGroupNode.get(key), JsonNode.class));
                 continue;
@@ -95,22 +97,24 @@ public class CloudFormationTemplateProcessor {
         return root;
     }
 
-    private String getObjectValue(JsonNode node) throws IOException{
+    private String getObjectValue(JsonNode node) throws IOException {
+        System.out.println("Get object value");
         System.out.println(node.toString());
         String refValue = node.get("Ref").textValue();
         System.out.println(refValue);
         JsonNode cidrIpRefData = objectMapper.readTree(this.jsonString).findValue(refValue);
         System.out.println(cidrIpRefData);
-        String regex = cidrIpRefData.get("AllowedPattern").toString();
+        String regex = cidrIpRefData.get("AllowedPattern").textValue();
 //        regex = regex.trim().replaceAll("^ | $|\\n ", "").replace(regex.substring(regex.length()-2), "")
-        regex = regex.replaceAll("^ | $|\\n ", "").substring(2, regex.length()-2);
+        regex = regex.replaceAll("\\^| $|\\n |\\$", "");
         System.out.println("regex = " + regex);
-//        Generex generex = new Generex("(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(/([0-9]|[1-2][0-9]|3[0-2]))");
+        Generex generex = new Generex(regex);
 //        // Generate all String that matches the given Regex.
+        System.out.println(generex.random());
 //        List<String> matchedStrs = generex.getAllMatchedStrings();
 //        System.out.println(matchedStrs.toString());
-//        String secondString = generex.getMatchedString(1);
-//        System.out.println(secondString);// it print '0b'
+        String secondString = generex.getMatchedString(1);
+        System.out.println(secondString);// it print '0b'
         Xeger generator = new Xeger(regex);
         String result = generator.generate();
         System.out.println(result);
