@@ -82,42 +82,35 @@ public class CloudFormationTemplateProcessor {
         ObjectNode root = mapper.createObjectNode();
         for (String key: MANDATORY_SG_KEYS) {
             if (securityGroupNode.has(key) && ! securityGroupNode.get(key).isNull()) {
-                String protocol = securityGroupNode.get(key).toString().replaceAll("\"", "");
-                if ((key.equalsIgnoreCase("IpProtocol") && protocol.equalsIgnoreCase("icmp"))) {
-                    return mapper.createObjectNode();
-                }
+                String protocol = securityGroupNode.get(key).textValue();
+                JsonNode value = securityGroupNode.get(key);
+//                if ((key.equalsIgnoreCase("IpProtocol") && protocol.equalsIgnoreCase("icmp"))) {
+//                    return mapper.createObjectNode();
+//                }
                 if (securityGroupNode.get(key) instanceof ObjectNode) {
-                    String value = getObjectValue(securityGroupNode.get(key));
+                    value = mapper.convertValue(getObjectValue(value), JsonNode.class);
                 }
-                root.set(key, mapper.convertValue(securityGroupNode.get(key), JsonNode.class));
+                root.set(key, mapper.convertValue(value, JsonNode.class));
                 continue;
             }
             return mapper.createObjectNode();
         }
+        System.out.println(root.toString());
         return root;
     }
 
     private String getObjectValue(JsonNode node) throws IOException {
         System.out.println("Get object value");
-        System.out.println(node.toString());
         String refValue = node.get("Ref").textValue();
-        System.out.println(refValue);
         JsonNode cidrIpRefData = objectMapper.readTree(this.jsonString).findValue(refValue);
-        System.out.println(cidrIpRefData);
         String regex = cidrIpRefData.get("AllowedPattern").textValue();
-//        regex = regex.trim().replaceAll("^ | $|\\n ", "").replace(regex.substring(regex.length()-2), "")
         regex = regex.replaceAll("\\^| $|\\n |\\$", "");
-        System.out.println("regex = " + regex);
         Generex generex = new Generex(regex);
-//        // Generate all String that matches the given Regex.
-        System.out.println(generex.random());
-//        List<String> matchedStrs = generex.getAllMatchedStrings();
-//        System.out.println(matchedStrs.toString());
         String secondString = generex.getMatchedString(1);
-        System.out.println(secondString);// it print '0b'
+        System.out.println(secondString);
         Xeger generator = new Xeger(regex);
         String result = generator.generate();
         System.out.println(result);
-        return "";
+        return generex.random();
     }
 }

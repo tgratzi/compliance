@@ -49,7 +49,9 @@ public class App {
             for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  cf.securityGroupRules.entrySet()) {
                 JaxbAccessRequestBuilder rule = new JaxbAccessRequestBuilder(securityGroupRule);
                 for (AccessRequest ar: rule.getAccessRequestList()) {
+                    System.out.println(ar.getService());
                     String accessRequestStr = rule.accessRequestBuilder(ar);
+                    System.out.println(accessRequestStr);
                     HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
                     SecurityPolicyViolationsForMultiArDTO violationMultiAr = violation.checkUSPAccessRequestViolation(stHelper, accessRequestStr);
                     String statusMsg;
