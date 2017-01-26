@@ -13,8 +13,8 @@ public class SecurityGroupToSubnet {
         sg2Ip.put("InstanceSecurityGroup", "10.0.0.10/24");
         sg2Ip.put("InstanceSecurityGroup2", "10.0.0.20/24");
         sg2Ip.put("InstanceSecurityGroup3", "10.0.0.30/24");
-        sg2Ip.put("InstanceSecurityGroup4", "10.0.0.9/32");
-        sg2Ip.put("InstanceSecurityGroup5", "11.0.0.0/24");
+        sg2Ip.put("WebSecurityGroup", "10.0.0.9/32");
+        sg2Ip.put("LbSecurityGroup", "11.0.0.0/24");
         sg2Ip.put("default", "0.0.0.0/0");
     }
 

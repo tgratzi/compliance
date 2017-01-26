@@ -68,7 +68,7 @@ public class CloudFormationTemplateProcessor {
             for (JsonNode securityGroupNode: securityGroupNodes){
                 JsonNode processedSecurityGroupNode = validateNode(securityGroupNode);
                 if (processedSecurityGroupNode.size() == 0) {
-                    System.out.println("Failed to find mandatory field");
+                    System.out.println("Failed to process security group");
                     continue;
                 }
                 try {
@@ -90,6 +90,8 @@ public class CloudFormationTemplateProcessor {
         while (items.hasNext()) {
             Map.Entry<String, JsonNode> item = items.next();
             String key = item.getKey();
+            if (key.equalsIgnoreCase("SourceSecurityGroupId"))
+                key = "CidrIp";
             JsonNode value = item.getValue();
             if (value instanceof ObjectNode) {
                 value = mapper.convertValue(getValueFromObject(value, key), JsonNode.class);
@@ -110,9 +112,16 @@ public class CloudFormationTemplateProcessor {
         JsonNode refObject = jsonRoot.findValue(refValue);
         JsonNode nodeType = refObject.get("Type");
         if (nodeType.textValue().equalsIgnoreCase(SECURITY_GROUP_TYPE)) {
-            return refObject.findValue(key).textValue();
+            try {
+                return refObject.findValue(key).textValue();
+            } catch (Exception ex) {
+                if (key.equalsIgnoreCase("CidrIp")) {
+                    return getValueFromObject(refObject.findValue("SourceSecurityGroupId"), "CidrIp");
+                }
+            }
         }
-        // If not found the security group type find in parameters
+        System.out.println("Not found in security group");
+        // If not found in security group type try find in parameters
         String value = "";
         if (key.equalsIgnoreCase("CidrIp")) {
             value = getCidrIp(refObject);

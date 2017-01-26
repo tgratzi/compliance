@@ -42,7 +42,7 @@ public class App {
     public static void main( String[] args ) throws IOException {
         try {
             System.out.println("Hello World!");
-            String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\aerospike-cf-hvm-private.json";
+            String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\ci_visualization.json";
             ViolationHelper violation = new ViolationHelper();
             System.out.println("Parsing Cloudformationtemplate");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
