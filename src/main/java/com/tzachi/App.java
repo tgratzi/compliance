@@ -46,7 +46,11 @@ public class App {
             ViolationHelper violation = new ViolationHelper();
             System.out.println("Parsing Cloudformationtemplate");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
-            for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  cf.securityGroupRules.entrySet()) {
+            Map<String, List<SecurityGroup>> securityGroupRules = cf.getSecurityGroupRules();
+            if (securityGroupRules.isEmpty()) {
+                throw new IOException("Could not security group was found");
+            }
+            for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  securityGroupRules.entrySet()) {
                 JaxbAccessRequestBuilder rule = new JaxbAccessRequestBuilder(securityGroupRule);
                 for (AccessRequest ar: rule.getAccessRequestList()) {
                     System.out.println(ar.getService());

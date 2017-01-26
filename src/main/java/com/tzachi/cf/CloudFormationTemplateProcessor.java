@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.mifmif.common.regex.Generex;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import com.tzachi.cf.dataTypes.json.SecurityGroup;
 import nl.flotsam.xeger.Xeger;
 import org.json.simple.parser.JSONParser;
@@ -20,18 +21,23 @@ public class CloudFormationTemplateProcessor {
     private final static String[] SECURITY_GROUP_RULE_TYPES = {"SecurityGroupIngress", "SecurityGroupEgress"};
     private final static Set<String> MANDATORY_SG_KEYS = new HashSet<String>(Arrays.asList(new String[] {"IpProtocol", "FromPort", "ToPort", "CidrIp"}));
     private ObjectMapper objectMapper = new ObjectMapper();
-    public Map<String, List<SecurityGroup>> securityGroupRules;
-    private final String jsonString;
+    private Map<String, List<SecurityGroup>> securityGroupRules;
+    private final JsonNode jsonRoot;
+
+    public Map<String, List<SecurityGroup>> getSecurityGroupRules() {
+        return securityGroupRules;
+    }
 
     public CloudFormationTemplateProcessor(String file) throws IOException {
         JSONParser parser = new JSONParser();
         try {
-            this.jsonString = parser.parse(new FileReader(file)).toString();
-            JsonNode resourcesRoot = objectMapper.readTree(this.jsonString).get("Resources");
+            this.jsonRoot = objectMapper.readTree(parser.parse(new FileReader(file)).toString());
+            JsonNode resourcesRoot = this.jsonRoot.get("Resources");
             this.securityGroupRules = processSecurityGroup(resourcesRoot);
         } catch (ParseException ex) {
             throw new IOException("Failed to parse file name " + file);
         }
+
     }
 
     public Map<String, List<SecurityGroup>> processSecurityGroup(JsonNode resourcesRoot) throws IOException {
@@ -60,7 +66,7 @@ public class CloudFormationTemplateProcessor {
         List<SecurityGroup> securityGroups = new ArrayList<SecurityGroup>();
         if (! securityGroupNodes.isNull()) {
             for (JsonNode securityGroupNode: securityGroupNodes){
-                JsonNode processedSecurityGroupNode = validateMandatoryFields(securityGroupNode);
+                JsonNode processedSecurityGroupNode = validateNode(securityGroupNode);
                 if (processedSecurityGroupNode.size() == 0) {
                     System.out.println("Failed to find mandatory field");
                     continue;
@@ -77,40 +83,55 @@ public class CloudFormationTemplateProcessor {
         return securityGroups;
     }
 
-    private JsonNode validateMandatoryFields(JsonNode securityGroupNode) throws IOException {
+    private JsonNode validateNode(JsonNode securityGroupNode) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode root = mapper.createObjectNode();
-        for (String key: MANDATORY_SG_KEYS) {
-            if (securityGroupNode.has(key) && ! securityGroupNode.get(key).isNull()) {
-                String protocol = securityGroupNode.get(key).textValue();
-                JsonNode value = securityGroupNode.get(key);
-//                if ((key.equalsIgnoreCase("IpProtocol") && protocol.equalsIgnoreCase("icmp"))) {
-//                    return mapper.createObjectNode();
-//                }
-                if (securityGroupNode.get(key) instanceof ObjectNode) {
-                    value = mapper.convertValue(getObjectValue(value), JsonNode.class);
+        Iterator<Map.Entry<String, JsonNode>> items = securityGroupNode.fields();
+        while (items.hasNext()) {
+            Map.Entry<String, JsonNode> item = items.next();
+            String key = item.getKey();
+            JsonNode value = item.getValue();
+            if (value instanceof ObjectNode) {
+                value = mapper.convertValue(getValueFromObject(value, key), JsonNode.class);
+            } else if (key.equalsIgnoreCase("FromPort") || key.equalsIgnoreCase("ToPort")) {
+                int intVal = Integer.parseInt(value.textValue());
+                if (intVal < 0) {
+                    value = mapper.convertValue(Math.abs(intVal), JsonNode.class);
                 }
-                root.set(key, mapper.convertValue(value, JsonNode.class));
-                continue;
             }
-            return mapper.createObjectNode();
+            root.set(key, mapper.convertValue(value, JsonNode.class));
         }
-        System.out.println(root.toString());
         return root;
     }
 
-    private String getObjectValue(JsonNode node) throws IOException {
-        System.out.println("Get object value");
+    private String getValueFromObject(JsonNode node, String key) throws IOException {
+        // looking first in security group type and next in parameter to find the real value
         String refValue = node.get("Ref").textValue();
-        JsonNode cidrIpRefData = objectMapper.readTree(this.jsonString).findValue(refValue);
+        JsonNode refObject = jsonRoot.findValue(refValue);
+        JsonNode nodeType = refObject.get("Type");
+        if (nodeType.textValue().equalsIgnoreCase(SECURITY_GROUP_TYPE)) {
+            return refObject.findValue(key).textValue();
+        }
+        // If not found the security group type find in parameters
+        String value = "";
+        if (key.equalsIgnoreCase("CidrIp")) {
+            value = getCidrIp(refObject);
+        }
+        return value;
+    }
+
+    private String getCidrIp(JsonNode cidrIpRefData) throws IOException{
+        if (cidrIpRefData.has("Default")) {
+            return cidrIpRefData.get("Default").textValue();
+        }
         String regex = cidrIpRefData.get("AllowedPattern").textValue();
         regex = regex.replaceAll("\\^| $|\\n |\\$", "");
         Generex generex = new Generex(regex);
-        String secondString = generex.getMatchedString(1);
-        System.out.println(secondString);
-        Xeger generator = new Xeger(regex);
-        String result = generator.generate();
-        System.out.println(result);
+//        String secondString = generex.getMatchedString(1);
+//        System.out.println(secondString);
+//        Xeger generator = new Xeger(regex);
+//        String result = generator.generate();
+//        System.out.println(result);
         return generex.random();
     }
 }
