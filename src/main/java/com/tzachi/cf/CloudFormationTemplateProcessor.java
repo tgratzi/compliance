@@ -61,7 +61,7 @@ public class CloudFormationTemplateProcessor {
     }
 
     public List<SecurityGroup> extractRule(Map.Entry<String, JsonNode> resourceNode, String securityGroupRuleType) throws IOException {
-        System.out.println("Getting rule for security group type " + securityGroupRuleType);
+//        System.out.println("Getting rule for security group type " + securityGroupRuleType);
         JsonNode securityGroupNodes = resourceNode.getValue().findPath(securityGroupRuleType);
         List<SecurityGroup> securityGroups = new ArrayList<SecurityGroup>();
         if (! securityGroupNodes.isNull()) {

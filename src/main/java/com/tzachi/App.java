@@ -55,7 +55,7 @@ public class App {
                 for (AccessRequest ar: rule.getAccessRequestList()) {
                     System.out.println(ar.getService());
                     String accessRequestStr = rule.accessRequestBuilder(ar);
-                    System.out.println(accessRequestStr);
+//                    System.out.println(accessRequestStr);
                     HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
                     SecurityPolicyViolationsForMultiArDTO violationMultiAr = violation.checkUSPAccessRequestViolation(stHelper, accessRequestStr);
                     String statusMsg;
@@ -67,7 +67,7 @@ public class App {
                     System.out.println(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
                 }
             }
-            System.out.println("No violations were found, good to go");
+            System.out.println("No violations were found, GOOD TO GO");
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
