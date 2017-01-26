@@ -39,35 +39,46 @@ public class App {
         return errorMsg.toString();
     }
 
+    private static void checkUspViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
+        Map<String, List<SecurityGroup>> securityGroupRules = cf.getSecurityGroupRules();
+        if (securityGroupRules.isEmpty()) {
+            throw new IOException("Could not security group was found");
+        }
+        for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  securityGroupRules.entrySet()) {
+            JaxbAccessRequestBuilder rule = new JaxbAccessRequestBuilder(securityGroupRule);
+            for (AccessRequest ar: rule.getAccessRequestList()) {
+                System.out.println(ar.getService());
+                String accessRequestStr = rule.accessRequestBuilder(ar);
+//                    System.out.println(accessRequestStr);
+
+                SecurityPolicyViolationsForMultiArDTO violationMultiAr = violation.checkUSPAccessRequestViolation(stHelper, accessRequestStr);
+                String statusMsg;
+                if (violationMultiAr.getSecurityPolicyViolationsForAr().isViolated()) {
+                    statusMsg = "VIOLATION FOUND";
+                    throw new IOException(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
+                }
+                statusMsg = "No violation found";
+                System.out.println(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
+            }
+        }
+        System.out.println("No violations were found, GOOD TO GO");
+    }
+
+    private static void checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
+
+    }
+
     public static void main( String[] args ) throws IOException {
         try {
             System.out.println("Hello World!");
             String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\ci_visualization.json";
             ViolationHelper violation = new ViolationHelper();
             System.out.println("Parsing Cloudformationtemplate");
+            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
-            Map<String, List<SecurityGroup>> securityGroupRules = cf.getSecurityGroupRules();
-            if (securityGroupRules.isEmpty()) {
-                throw new IOException("Could not security group was found");
-            }
-            for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  securityGroupRules.entrySet()) {
-                JaxbAccessRequestBuilder rule = new JaxbAccessRequestBuilder(securityGroupRule);
-                for (AccessRequest ar: rule.getAccessRequestList()) {
-                    System.out.println(ar.getService());
-                    String accessRequestStr = rule.accessRequestBuilder(ar);
-//                    System.out.println(accessRequestStr);
-                    HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
-                    SecurityPolicyViolationsForMultiArDTO violationMultiAr = violation.checkUSPAccessRequestViolation(stHelper, accessRequestStr);
-                    String statusMsg;
-                    if (violationMultiAr.getSecurityPolicyViolationsForAr().isViolated()) {
-                        statusMsg = "VIOLATION FOUND";
-                        throw new IOException(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
-                    }
-                    statusMsg = "No violation found";
-                    System.out.println(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
-                }
-            }
-            System.out.println("No violations were found, GOOD TO GO");
+            checkUspViolation(cf, stHelper, violation);
+            checkTagPolicyViolation(cf, stHelper, violation);
+
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
