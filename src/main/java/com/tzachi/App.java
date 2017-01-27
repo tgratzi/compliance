@@ -11,6 +11,7 @@ import com.tzachi.common.HttpHelper;
 import com.tzachi.st.ViolationHelper;
 import com.tzachi.st.dataTypes.SecurityPolicyViolationsForMultiArDTO;
 import com.tzachi.st.dataTypes.TagPolicyViolationsCheckRequestDTO;
+import com.tzachi.st.dataTypes.TagPolicyViolationsResponseDTO;
 
 import java.io.IOException;
 import java.util.List;
@@ -72,7 +73,8 @@ public class App {
         for (TagPolicyViolationsCheckRequestDTO tagPolicyViolation: tagPolicyViolationList) {
             String jsonTagPolicyViolation = mapper.writeValueAsString(tagPolicyViolation);
 //            System.out.println(jsonTagPolicyViolation);
-            violation.checkTagViolation(stHelper, jsonTagPolicyViolation, "tp-101");
+            TagPolicyViolationsResponseDTO tagPolicyViolationsResponse= violation.checkTagViolation(stHelper, jsonTagPolicyViolation, "tp-101");
+            System.out.println(tagPolicyViolationsResponse.isViolated());
         }
     }
 
@@ -86,7 +88,7 @@ public class App {
 //            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
             HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
-            checkUspViolation(cf, stHelper, violation);
+//            checkUspViolation(cf, stHelper, violation);
             checkTagPolicyViolation(cf, stHelper, violation);
         } catch (IOException ex) {
             System.out.println(ex.getMessage());

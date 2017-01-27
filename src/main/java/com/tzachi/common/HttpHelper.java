@@ -85,7 +85,7 @@ public class HttpHelper {
             httppost.setEntity(new StringEntity(body));
             System.out.println("Executing request " + httppost.getRequestLine());
             response = httpclient.execute(httppost);
-            System.out.println("response: " + response.getEntity());
+//            System.out.println("response: " + response.getEntity());
             int status = response.getStatusLine().getStatusCode();
             if (status >= 200 && status < 300) {
                 returnData = getJsonFromHttpResponse(response);
