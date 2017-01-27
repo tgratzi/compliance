@@ -38,17 +38,17 @@ public class CloudFormationTemplateProcessor {
         try {
             this.jsonRoot = objectMapper.readTree(parser.parse(new FileReader(file)).toString());
             JsonNode resourcesRoot = this.jsonRoot.get("Resources");
-            this.securityGroupRules = processSecurityGroup(resourcesRoot);
-            this.tagPolicyViolationsCheckRequestList = processTags(resourcesRoot);
+            processCF(resourcesRoot);
         } catch (ParseException ex) {
             throw new IOException("Failed to parse file name " + file);
         }
 
     }
 
-    private Map<String, List<SecurityGroup>> processSecurityGroup(JsonNode resourcesRoot) throws IOException {
+    private void processCF(JsonNode resourcesRoot) throws IOException {
         System.out.println("Processing cloudformation security group");
         Map<String, List<SecurityGroup>> securityGroups = new HashMap();
+        List<TagPolicyViolationsCheckRequestDTO> tagPolicyList = new ArrayList<TagPolicyViolationsCheckRequestDTO>();
         Iterator<Map.Entry<String, JsonNode>> fields = resourcesRoot.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> resourceNode = fields.next();
@@ -61,9 +61,12 @@ public class CloudFormationTemplateProcessor {
                     }
                     securityGroups.put(resourceNode.getKey(), securityGroupRules);
                 }
+            } else if (typeNode != null && INSTANCE_TYPE.equals(typeNode.textValue())) {
+                extractTag(resourceNode);
             }
         }
-        return securityGroups;
+        this.securityGroupRules = securityGroups;
+        this.tagPolicyViolationsCheckRequestList = tagPolicyList;
     }
 
     private List<SecurityGroup> extractRule(Map.Entry<String, JsonNode> resourceNode, String securityGroupRuleType) throws IOException {
@@ -150,20 +153,6 @@ public class CloudFormationTemplateProcessor {
         return generex.random();
     }
 
-    private List<TagPolicyViolationsCheckRequestDTO> processTags(JsonNode resourcesRoot) throws IOException {
-        System.out.println("Processing cloudformation security group");
-        List<TagPolicyViolationsCheckRequestDTO> tagPolicyList = new ArrayList<TagPolicyViolationsCheckRequestDTO>();
-        Iterator<Map.Entry<String, JsonNode>> fields = resourcesRoot.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> resourceNode = fields.next();
-            JsonNode typeNode = resourceNode.getValue().get("Type");
-            if (typeNode != null && INSTANCE_TYPE.equals(typeNode.textValue())) {
-                extractTag(resourceNode);
-            }
-        }
-        return tagPolicyList;
-    }
-
     private List<TagPolicyViolationsCheckRequestDTO> extractTag(Map.Entry<String, JsonNode> instanceNode) {
         List<TagPolicyViolationsCheckRequestDTO> tagPolicyViolations = new ArrayList<TagPolicyViolationsCheckRequestDTO>();
         TagPolicyViolationsCheckRequestDTO tagPolicyViolation = new TagPolicyViolationsCheckRequestDTO();
@@ -203,11 +192,12 @@ public class CloudFormationTemplateProcessor {
 
     private TagPolicyResource getTag(JsonNode node) {
         TagPolicyResource tagPolicyViolation = new TagPolicyResource();
+        Map<String, String> tagsMap = new HashMap<String, String>();
         JsonNode tagArray = node.findValue("Tags");
-        for (JsonNode tag: tagArray) {
-            System.out.println(tag);
-        }
+        for (JsonNode tag: tagArray)
+            tagsMap.put(tag.get("Key").textValue(), tag.get("Value").textValue());
 
+        System.out.println(tagsMap);
         return tagPolicyViolation;
     }
 
