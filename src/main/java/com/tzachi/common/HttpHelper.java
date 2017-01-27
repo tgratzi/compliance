@@ -2,6 +2,7 @@ package com.tzachi.common;
 
 import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.apache.http.HttpEntity;
@@ -17,13 +18,12 @@ import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContexts;
 import org.apache.http.util.EntityUtils;
 import org.json.simple.parser.ParseException;
 
-import javax.net.ssl.SSLContext;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.text.MessageFormat;
 
 
@@ -39,54 +39,53 @@ public class HttpHelper {
         this.host = host;
     }
 
-    private CloseableHttpClient getHttpsClient() {
-        TrustStrategy TRUST_ALL_TRUST_STRATEGY = new TrustSelfSignedStrategy() {
-            public boolean isTrusted(java.security.cert.X509Certificate[] chain, String authType)
-                    throws java.security.cert.CertificateException {
-                return true;
-            }
-        };
-
+    private SSLConnectionSocketFactory getSSLSocketFactory() throws IOException {
         SSLConnectionSocketFactory sslsf;
         try {
-            SSLContext sslContext = SSLContexts.custom().
-                    useProtocol("TLSv1.2")
-                    .loadTrustMaterial(null, TRUST_ALL_TRUST_STRATEGY)
-                    .build();
-            sslsf = new SSLConnectionSocketFactory(
-                    sslContext,
-                    new String[] { "TLSv1.2" },
-                    null,
-                    SSLConnectionSocketFactory.getDefaultHostnameVerifier());
-        } catch (GeneralSecurityException e) {
-            // NOTE: the assumption is that this error should not happen
-            throw new RuntimeException("Failed to create SSL socket factory", e);
+            SSLContextBuilder sslContextBuilder = new SSLContextBuilder();
+            sslContextBuilder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+            HostnameVerifier hostnameVerifierAllowAll = new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            };
+            sslsf = new SSLConnectionSocketFactory(sslContextBuilder.build(), hostnameVerifierAllowAll);
+        } catch (Exception ex) {
+            throw new IOException("Failed to set SSL socket");
         }
-
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(
-                new AuthScope(host, 443),
-                new UsernamePasswordCredentials(username, password));
-        CloseableHttpClient httpclient = HttpClients.custom()
-                .setSSLSocketFactory(sslsf)
-                .setDefaultCredentialsProvider(credsProvider)
-                .build();
-        return httpclient;
+        return sslsf;
     }
 
-    public JSONObject post(String uri, String str) throws IOException {
+    private CloseableHttpClient getHttpsClient() {
+        try {
+            CredentialsProvider credsProvider = new BasicCredentialsProvider();
+            credsProvider.setCredentials(
+                    new AuthScope(host, 443),
+                    new UsernamePasswordCredentials(username, password));
+            CloseableHttpClient httpclient = HttpClients.custom()
+                    .setSSLSocketFactory(getSSLSocketFactory())
+                    .setDefaultCredentialsProvider(credsProvider)
+                    .build();
+            return httpclient;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        return HttpClients.custom().build();
+    }
+
+    public JSONObject post(String uri, String body, String contentType) throws IOException {
         System.out.println("Running post request");
         String url = MessageFormat.format(uri, host);
         CloseableHttpClient httpclient = getHttpsClient();
         CloseableHttpResponse response = null;
         JSONObject returnData = new JSONObject();
         HttpPost httppost = new HttpPost(url);
-        httppost.addHeader("content-type", "application/xml");
+        httppost.addHeader("content-type", contentType);
         try {
-            httppost.setEntity(new StringEntity(str));
+            httppost.setEntity(new StringEntity(body));
             System.out.println("Executing request " + httppost.getRequestLine());
             response = httpclient.execute(httppost);
-//            System.out.println(response.getEntity());
+            System.out.println("response: " + response.getEntity());
             int status = response.getStatusLine().getStatusCode();
             if (status >= 200 && status < 300) {
                 returnData = getJsonFromHttpResponse(response);
@@ -94,6 +93,8 @@ public class HttpHelper {
                 String msg = "HTTP status: " + status + ", \nResponse: " + EntityUtils.toString(response.getEntity());
                 throw new IOException(msg);
             }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         } finally {
             if (null != response) {
                 response.close();

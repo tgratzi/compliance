@@ -8,7 +8,7 @@ public class ViolationDTO {
     private String severities = null;
 
     public ViolationDTO(JSONObject json) {
-        JSONArray violation = new JSONArray();
-        violation = (JSONArray) json.get(Elements.VIOLATION);
+        JSONObject violation = new JSONObject();
+//        violation = json.get(Elements.VIOLATION);
     }
 }

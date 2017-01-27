@@ -28,13 +28,17 @@ public class ViolationHelper {
         System.out.println("Checking USP access request violation");
         JSONObject response = new JSONObject();
         SecurityPolicyViolationsForMultiArDTO violationMultiAr = null;
-        response = stHelper.post(uspURL, str);
+        response = stHelper.post(uspURL, str, "application/xml");
         violationMultiAr = new SecurityPolicyViolationsForMultiArDTO(response);
         return violationMultiAr;
     }
 
-    public void checkTagViolation(HttpHelper stHelper) throws IOException {
-        final String tagURL = "https://{0}/securetrack/api/tagpolicy/violation_check.json?policy_external_id={1}";
+    public void checkTagViolation(HttpHelper stHelper, String body, String policyId) throws IOException {
+        final String tagURL = "https://{0}/securetrack/api/tagpolicy/violation_check?policy_external_id=" + policyId;
         logger.info("Tag Violation");
+        System.out.println(body);
+        JSONObject response = new JSONObject();
+        response = stHelper.post(tagURL, body, "application/json");
+        System.out.println(response);
     }
 }

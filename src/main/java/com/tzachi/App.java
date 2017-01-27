@@ -1,6 +1,7 @@
 package com.tzachi;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tzachi.cf.CloudFormationTemplateProcessor;
 import com.tzachi.cf.JaxbAccessRequestBuilder;
 import com.tzachi.cf.dataTypes.json.SecurityGroup;
@@ -9,6 +10,7 @@ import com.tzachi.common.BuildComplianceLog;
 import com.tzachi.common.HttpHelper;
 import com.tzachi.st.ViolationHelper;
 import com.tzachi.st.dataTypes.SecurityPolicyViolationsForMultiArDTO;
+import com.tzachi.st.dataTypes.TagPolicyViolationsCheckRequestDTO;
 
 import java.io.IOException;
 import java.util.List;
@@ -65,7 +67,13 @@ public class App {
     }
 
     private static void checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
-
+        ObjectMapper mapper = new ObjectMapper();
+        List<TagPolicyViolationsCheckRequestDTO> tagPolicyViolationList = cf.getTagPolicyViolationsCheckRequestList();
+        for (TagPolicyViolationsCheckRequestDTO tagPolicyViolation: tagPolicyViolationList) {
+            String jsonTagPolicyViolation = mapper.writeValueAsString(tagPolicyViolation);
+//            System.out.println(jsonTagPolicyViolation);
+            violation.checkTagViolation(stHelper, jsonTagPolicyViolation, "tp-101");
+        }
     }
 
     public static void main( String[] args ) throws IOException {
@@ -74,11 +82,12 @@ public class App {
             String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\ci_visualization.json";
             ViolationHelper violation = new ViolationHelper();
             System.out.println("Parsing Cloudformationtemplate");
-            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
+//            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
+//            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
+            HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
             checkUspViolation(cf, stHelper, violation);
             checkTagPolicyViolation(cf, stHelper, violation);
-
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }

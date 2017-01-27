@@ -1,11 +1,11 @@
 package com.tzachi.cf;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import com.tzachi.cf.dataTypes.PreDefinedService;
 import com.tzachi.cf.dataTypes.Protocol;
 import com.tzachi.cf.dataTypes.json.SecurityGroup;
 import com.tzachi.cf.dataTypes.xml.*;
 import com.tzachi.common.SecurityGroupToSubnet;
+import com.tzachi.st.dataTypes.TagPolicyViolationsCheckRequestDTO;
 import org.apache.commons.net.util.SubnetUtils;
 
 import javax.xml.bind.JAXBContext;
@@ -19,6 +19,8 @@ import java.util.Map;
 
 public class JaxbAccessRequestBuilder {
     private List<AccessRequest> accessRequestList = new ArrayList<AccessRequest>();
+
+    public JaxbAccessRequestBuilder() {}
 
     public JaxbAccessRequestBuilder(Map.Entry<String, List<SecurityGroup>> securityGroupMap) throws IOException {
         SubnetUtils sgNet = SecurityGroupToSubnet.getIP(securityGroupMap.getKey());

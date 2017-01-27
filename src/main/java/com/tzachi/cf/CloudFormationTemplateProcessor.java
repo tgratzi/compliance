@@ -33,6 +33,10 @@ public class CloudFormationTemplateProcessor {
         return securityGroupRules;
     }
 
+    public List<TagPolicyViolationsCheckRequestDTO> getTagPolicyViolationsCheckRequestList() {
+        return tagPolicyViolationsCheckRequestList;
+    }
+
     public CloudFormationTemplateProcessor(String file) throws IOException {
         JSONParser parser = new JSONParser();
         try {
@@ -46,7 +50,7 @@ public class CloudFormationTemplateProcessor {
     }
 
     private void processCF(JsonNode resourcesRoot) throws IOException {
-        System.out.println("Processing cloudformation security group");
+        System.out.println("Processing Cloudformation security group");
         Map<String, List<SecurityGroup>> securityGroups = new HashMap();
         List<TagPolicyViolationsCheckRequestDTO> tagPolicyList = new ArrayList<TagPolicyViolationsCheckRequestDTO>();
         Iterator<Map.Entry<String, JsonNode>> fields = resourcesRoot.fields();
@@ -62,7 +66,7 @@ public class CloudFormationTemplateProcessor {
                     securityGroups.put(resourceNode.getKey(), securityGroupRules);
                 }
             } else if (typeNode != null && INSTANCE_TYPE.equals(typeNode.textValue())) {
-                extractTag(resourceNode);
+                tagPolicyList.add(getTagFromInstance(resourceNode));
             }
         }
         this.securityGroupRules = securityGroups;
@@ -153,11 +157,11 @@ public class CloudFormationTemplateProcessor {
         return generex.random();
     }
 
-    private List<TagPolicyViolationsCheckRequestDTO> extractTag(Map.Entry<String, JsonNode> instanceNode) {
-        List<TagPolicyViolationsCheckRequestDTO> tagPolicyViolations = new ArrayList<TagPolicyViolationsCheckRequestDTO>();
+    private TagPolicyViolationsCheckRequestDTO getTagFromInstance(Map.Entry<String, JsonNode> instanceNode) {
         TagPolicyViolationsCheckRequestDTO tagPolicyViolation = new TagPolicyViolationsCheckRequestDTO();
         tagPolicyViolation.setImage(getImageId(instanceNode.getValue()));
         tagPolicyViolation.setTagPolicyResource(getTag(instanceNode.getValue()));
+        tagPolicyViolation.setName(instanceNode.getKey());
 //        JsonNode instanceProperties = instanceNode.getValue().findPath("Properties");
 //        Iterator<Map.Entry<String, JsonNode>> items = instanceProperties.fields();
 //        while (items.hasNext()) {
@@ -177,7 +181,7 @@ public class CloudFormationTemplateProcessor {
 //
 //            }
 //        }
-        return tagPolicyViolations;
+        return tagPolicyViolation;
     }
 
     private String getImageId(JsonNode node) {
@@ -197,7 +201,11 @@ public class CloudFormationTemplateProcessor {
         for (JsonNode tag: tagArray)
             tagsMap.put(tag.get("Key").textValue(), tag.get("Value").textValue());
 
-        System.out.println(tagsMap);
+//        System.out.println(tagsMap);
+        StringBuilder sb = new StringBuilder("{\"tags\":");
+        sb.append(tagsMap).append("}");
+//        System.out.println(sb.toString());
+//        StringEntity input = new StringEntity(sb.toString());
         return tagPolicyViolation;
     }
 
