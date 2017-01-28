@@ -13,6 +13,4 @@ public final class Elements {
     public static final String VIOLATION = "violation";
     public static final String VIOLATIONS = "violations";
     public static final String VIOLATION_MESSAGE = "violation_message";
-
-
 }

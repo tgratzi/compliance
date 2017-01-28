@@ -63,29 +63,33 @@ public class App {
                 System.out.println(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
             }
         }
-        System.out.println("No violations were found, GOOD TO GO");
+        System.out.println("Compliance check for AWS security groups pass with no violation");
     }
 
     private static void checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         List<TagPolicyViolationsCheckRequestDTO> tagPolicyViolationList = cf.getTagPolicyViolationsCheckRequestList();
-        for (TagPolicyViolationsCheckRequestDTO tagPolicyViolation: tagPolicyViolationList) {
-            String jsonTagPolicyViolation = mapper.writeValueAsString(tagPolicyViolation);
-//            System.out.println(jsonTagPolicyViolation);
-            TagPolicyViolationsResponseDTO tagPolicyViolationsResponse= violation.checkTagViolation(stHelper, jsonTagPolicyViolation, "tp-101");
-            System.out.println(tagPolicyViolationsResponse.isViolated());
+        if (tagPolicyViolationList.isEmpty()) {
+            System.out.println("No Instance TAGs were found in the Cloudformation template");
+        } else {
+            for (TagPolicyViolationsCheckRequestDTO tagPolicyViolation : tagPolicyViolationList) {
+                String jsonTagPolicyViolation = mapper.writeValueAsString(tagPolicyViolation);
+                //            System.out.println(jsonTagPolicyViolation);
+                TagPolicyViolationsResponseDTO tagPolicyViolationsResponse = violation.checkTagViolation(stHelper, jsonTagPolicyViolation, "tp-101");
+                System.out.println(tagPolicyViolationsResponse.isViolated());
+            }
         }
     }
 
     public static void main( String[] args ) throws IOException {
         try {
             System.out.println("Hello World!");
-            String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\ci_visualization.json";
+            String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\blue-green-init.json";
             ViolationHelper violation = new ViolationHelper();
-            System.out.println("Parsing Cloudformationtemplate");
-//            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
+            System.out.println(String.format("Compliance check for Cloudformation template '%s'", "blue-green-init.json"));
+            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
 //            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
-            HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
+//            HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
             checkUspViolation(cf, stHelper, violation);
             checkTagPolicyViolation(cf, stHelper, violation);

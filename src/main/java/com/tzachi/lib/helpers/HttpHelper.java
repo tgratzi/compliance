@@ -92,7 +92,7 @@ public class HttpHelper {
                 throw new IOException(msg);
             }
         } catch (Exception ex) {
-            ex.printStackTrace();
+            throw new IOException(ex.getMessage());
         } finally {
             if (null != response) {
                 response.close();
