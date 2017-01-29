@@ -87,12 +87,13 @@ public class App {
             String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\blue-green-init.json";
             ViolationHelper violation = new ViolationHelper();
             System.out.println(String.format("Compliance check for Cloudformation template '%s'", "blue-green-init.json"));
-            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
+//            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
 //            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
-//            HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
-            CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
-            checkUspViolation(cf, stHelper, violation);
-            checkTagPolicyViolation(cf, stHelper, violation);
+            HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
+//            CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
+//            checkUspViolation(cf, stHelper, violation);
+//            checkTagPolicyViolation(cf, stHelper, violation);
+            violation.getTagPolicies(stHelper);
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }
