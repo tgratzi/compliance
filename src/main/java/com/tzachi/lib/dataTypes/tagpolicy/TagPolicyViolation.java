@@ -26,6 +26,7 @@ public class TagPolicyViolation {
         this.requirementName = node.get(Elements.POLICY_ID).toString();
         this.policyName = node.get(Elements.POLICY_NAME).toString();
         this.violationMessage = node.get(Elements.VIOLATION_MESSAGE).toString();
+        System.out.println(requirementType);
         if (requirementType.equalsIgnoreCase(VALID_VALUES_REQUIREMENT_TYPE)) {
             this.violationAttributes = new InvalidTagValueViolationAttributes(node.get(Elements.VIOLATION_ATTRIBUTES));
         } else {
@@ -34,13 +35,12 @@ public class TagPolicyViolation {
         System.out.println(violationAttributes);
     }
 
-    private class InvalidTagValueViolationAttributes extends TagPolicyViolation {
+    private class InvalidTagValueViolationAttributes {
         private String tag;
         private String invalidValue;
         private List<String> validValues;
 
         public InvalidTagValueViolationAttributes(JsonNode node) {
-            super(node);
             this.tag = node.get(Elements.TAG).textValue();
             this.invalidValue = node.get(Elements.INVALID_VALUE).textValue();
             for (int i=0; i<node.get(Elements.VALID_VALUES).size(); i++) {
@@ -49,11 +49,10 @@ public class TagPolicyViolation {
         }
     }
 
-    private class MandatoryTagMissingViolationAttributes extends TagPolicyViolation {
+    private class MandatoryTagMissingViolationAttributes {
         private String missingTag;
 
         public MandatoryTagMissingViolationAttributes(JsonNode node) {
-            super(node);
             this.missingTag = node.get(Elements.MISSING_TAG).textValue();
         }
     }
