@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tzachi.lib.dataTypes.generic.Elements;
 import org.json.simple.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by tzachi.gratziani on 28/01/2017.
@@ -35,19 +32,12 @@ public class TagPolicyDetailedResponse {
         return policyNameId;
     }
 
-    public List<List<String>> getTags() {
-        List<List<String>> allPoliciesTags = new ArrayList<List<String>>();
+    public Set<String> getTagsByPolicyId(String policyId) {
+        Set<String> tags = new HashSet<String>();
         for (TagPolicy result: results) {
-            allPoliciesTags.add(result.getTags());
+            if (result.getPolicyId().equalsIgnoreCase(policyId))
+                tags = result.getTags();
         }
-        return allPoliciesTags;
-    }
-
-    public List<List<Map<String,List<String>>>> getAllTagsValues() {
-        List<List<Map<String,List<String>>>> allTagsValues = new ArrayList<List<Map<String, List<String>>>>();
-        for (TagPolicy result: results) {
-            allTagsValues.add(result.getTagsValues());
-        }
-        return allTagsValues;
+        return tags;
     }
 }

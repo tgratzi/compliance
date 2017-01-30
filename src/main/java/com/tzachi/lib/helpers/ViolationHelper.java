@@ -1,13 +1,15 @@
 package com.tzachi.lib.helpers;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tzachi.lib.dataTypes.generic.Elements;
 import com.tzachi.lib.dataTypes.securitypolicyviolation.SecurityPolicyViolationsForMultiArDTO;
 import com.tzachi.lib.dataTypes.tagpolicy.TagPolicyDetailedResponse;
-import com.tzachi.lib.dataTypes.tagpolicy.TagPolicyViolationsResponseDTO;
+import com.tzachi.lib.dataTypes.tagpolicy.TagPolicyViolationsResponse;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -37,19 +39,18 @@ public class ViolationHelper {
         return violationMultiAr;
     }
 
-    public TagPolicyViolationsResponseDTO checkTagViolation(HttpHelper stHelper, String body, String policyId) throws IOException {
-        JSONObject response = stHelper.post(TAG_URL + policyId, body, APPLICATION_JSON);
-        TagPolicyViolationsResponseDTO tagPolicyViolationsResponse = new TagPolicyViolationsResponseDTO(response);
+    public TagPolicyViolationsResponse checkTagViolation(HttpHelper stHelper, String body, String policyId) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        JSONObject response = (JSONObject) stHelper.post(TAG_URL + policyId, body, APPLICATION_JSON);
+        JsonNode JsonNodeResponse = mapper.convertValue(response, JsonNode.class);
+        TagPolicyViolationsResponse tagPolicyViolationsResponse = new TagPolicyViolationsResponse(JsonNodeResponse);
         return tagPolicyViolationsResponse;
     }
 
-    public Map<String,String> getTagPolicies(HttpHelper stHelper) throws IOException {
+    public TagPolicyDetailedResponse getTagPolicies(HttpHelper stHelper) throws IOException {
         JSONObject response = stHelper.get(POLICY_URL);
         TagPolicyDetailedResponse tagPolicyDetailedResponse = new TagPolicyDetailedResponse(response);
-        Map<String,String> policyNameId = tagPolicyDetailedResponse.getAllPolicyId();
-        System.out.println(policyNameId);
-        System.out.println(tagPolicyDetailedResponse.getTags());
-        System.out.println(tagPolicyDetailedResponse.getAllTagsValues());
-        return policyNameId;
+//        Map<String,String> policyNameId = tagPolicyDetailedResponse.getAllPolicyId();
+        return tagPolicyDetailedResponse;
     }
 }

@@ -10,8 +10,8 @@ import com.tzachi.lib.helpers.BuildComplianceLog;
 import com.tzachi.lib.helpers.HttpHelper;
 import com.tzachi.lib.helpers.ViolationHelper;
 import com.tzachi.lib.dataTypes.securitypolicyviolation.SecurityPolicyViolationsForMultiArDTO;
-import com.tzachi.lib.dataTypes.tagpolicy.TagPolicyViolationsCheckRequestDTO;
-import com.tzachi.lib.dataTypes.tagpolicy.TagPolicyViolationsResponseDTO;
+import com.tzachi.lib.dataTypes.tagpolicy.TagPolicyViolationsCheckRequest;
+import com.tzachi.lib.dataTypes.tagpolicy.TagPolicyViolationsResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -66,17 +66,18 @@ public class App {
         System.out.println("Compliance check for AWS security groups pass with no violation");
     }
 
-    private static void checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
+    private static void checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper,
+                                                ViolationHelper violation, String policyId) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        List<TagPolicyViolationsCheckRequestDTO> tagPolicyViolationList = cf.getTagPolicyViolationsCheckRequestList();
-        if (tagPolicyViolationList.isEmpty()) {
+        List<TagPolicyViolationsCheckRequest> instanceTagsList = cf.getTagPolicyViolationsCheckRequestList();
+        if (instanceTagsList.isEmpty()) {
             System.out.println("No Instance TAGs were found in the Cloudformation template");
         } else {
-            for (TagPolicyViolationsCheckRequestDTO tagPolicyViolation : tagPolicyViolationList) {
-                String jsonTagPolicyViolation = mapper.writeValueAsString(tagPolicyViolation);
+            for (TagPolicyViolationsCheckRequest instanceTags : instanceTagsList) {
+                String jsonTagPolicyViolation = mapper.writeValueAsString(instanceTags);
                 //            System.out.println(jsonTagPolicyViolation);
-                TagPolicyViolationsResponseDTO tagPolicyViolationsResponse = violation.checkTagViolation(stHelper, jsonTagPolicyViolation, "tp-101");
-                System.out.println(tagPolicyViolationsResponse.isViolated());
+                TagPolicyViolationsResponse tagPolicyViolationsResponse = violation.checkTagViolation(stHelper, jsonTagPolicyViolation, policyId);
+                System.out.println("TAG Violation = " + tagPolicyViolationsResponse.isViolated());
             }
         }
     }
@@ -90,10 +91,9 @@ public class App {
 //            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
 //            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
             HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
-//            CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
+            CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
 //            checkUspViolation(cf, stHelper, violation);
-//            checkTagPolicyViolation(cf, stHelper, violation);
-            violation.getTagPolicies(stHelper);
+            checkTagPolicyViolation(cf, stHelper, violation, "tp-101");
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }

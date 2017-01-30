@@ -4,18 +4,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.tzachi.lib.dataTypes.generic.Elements;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.tzachi.lib.dataTypes.generic.Attributes.MANDATORY_REQUIREMENT_TYPE;
+import static com.tzachi.lib.dataTypes.generic.Attributes.VALID_VALUES_REQUIREMENT_TYPE;
 
 /**
  * Created by tzachi.gratziani on 28/01/2017.
  */
 public class TagPolicy {
-    private static final String MANDATORY_REQUIREMENT_TYPE = "mandatory_tags";
-    private static final String VALID_VALUES_REQUIREMENT_TYPE = "valid_values";
-
     private String policy_description;
     private String policyId;
     private String policyName;
@@ -49,23 +46,28 @@ public class TagPolicy {
         return policyName;
     }
 
-    public List<String> getTags() {
+    public Set<String> getTags() {
+        Set<String> tags = new HashSet<String>();
         for (int i=0; i<requirements.size(); i++) {
             if (((TagPolicyRequirement) requirements.get(i)).getRequirementType().equalsIgnoreCase(MANDATORY_REQUIREMENT_TYPE)) {
-                System.out.println(((TagPolicyRequirement.MandatoryTagPolicyRequirement) requirements.get(i)).getTags());
+                List<String> tagList = ((TagPolicyRequirement.MandatoryTagPolicyRequirement) requirements.get(i)).getTags();
+                for (String tag: tagList)
+                    tags.add(tag);
             }
         }
-        return null;
+        return tags;
     }
 
-    public List<Map<String,List<String>>> getTagsValues() {
-        List<Map<String,List<String>>> l = new ArrayList<Map<String, List<String>>>();
+    public Map<String,List<String>> getAllTagsValues() {
+        Map<String,List<String>> m = new HashMap<String, List<String>>();
         for (int i=0; i<requirements.size(); i++) {
             if (((TagPolicyRequirement) requirements.get(i)).getRequirementType().equalsIgnoreCase(VALID_VALUES_REQUIREMENT_TYPE)) {
-                l.add(((TagPolicyRequirement.ValidValuesTagPolicyRequirement) requirements.get(i)).getTagsValues());
+                String tag = ((TagPolicyRequirement.ValidValuesTagPolicyRequirement) requirements.get(i)).getTag();
+                List<String> values = ((TagPolicyRequirement.ValidValuesTagPolicyRequirement) requirements.get(i)).getValues();
+                m.put(tag, values);
             }
         }
-        System.out.println(l);
-        return l;
+        System.out.println(m);
+        return m;
     }
 }

@@ -61,10 +61,12 @@ public class TagPolicyRequirement {
             }
         }
 
-        public Map<String,List<String>> getTagsValues() {
-            Map<String,List<String>> m = new HashMap<String, List<String>>();
-            m.put(tag, values);
-            return m;
+        public String getTag() {
+            return tag;
+        }
+
+        public List<String> getValues() {
+            return values;
         }
     }
 }
