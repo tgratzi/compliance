@@ -13,6 +13,7 @@ public final class Elements {
     public static final String REQUIREMENTS = "requirements";
     public static final String REQUIREMENT_DESCRIPTION = "requirement_description";
     public static final String REQUIREMENT_NAME = "requirement_name";
+    public static final String REQUIREMENT_SEVERITY = "requirement_severity";
     public static final String REQUIREMENT_TYPE = "requirement_type";
     public static final String RESULT = "result";
     public static final String SECURITY_POLICY_VIOLATIONS_FOR_AR = "security_policy_violations_for_ar";

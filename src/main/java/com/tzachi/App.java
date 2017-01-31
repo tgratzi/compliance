@@ -2,6 +2,7 @@ package com.tzachi;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tzachi.lib.dataTypes.tagpolicy.TagPolicyViolation;
 import com.tzachi.lib.helpers.CloudFormationTemplateProcessor;
 import com.tzachi.lib.helpers.JaxbAccessRequestBuilder;
 import com.tzachi.lib.dataTypes.securitygroup.SecurityGroup;
@@ -73,12 +74,19 @@ public class App {
         if (instanceTagsList.isEmpty()) {
             System.out.println("No Instance TAGs were found in the Cloudformation template");
         } else {
+            StringBuffer violationMsg = new StringBuffer();
             for (TagPolicyViolationsCheckRequest instanceTags : instanceTagsList) {
                 String jsonTagPolicyViolation = mapper.writeValueAsString(instanceTags);
                 //            System.out.println(jsonTagPolicyViolation);
                 TagPolicyViolationsResponse tagPolicyViolationsResponse = violation.checkTagViolation(stHelper, jsonTagPolicyViolation, policyId);
-                System.out.println("TAG Violation = " + tagPolicyViolationsResponse.isViolated());
+                if (tagPolicyViolationsResponse.isViolated()) {
+                    for (TagPolicyViolation tagViolation: tagPolicyViolationsResponse.getViolations())
+                        violationMsg.append(tagViolation.toString()).append("\n");
+                }
             }
+            System.out.println("----------------------------------------------------------------------");
+            System.out.println(violationMsg.toString());
+            System.out.println("----------------------------------------------------------------------");
         }
     }
 
@@ -92,7 +100,7 @@ public class App {
 //            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
             HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
-//            checkUspViolation(cf, stHelper, violation);
+            checkUspViolation(cf, stHelper, violation);
             checkTagPolicyViolation(cf, stHelper, violation, "tp-101");
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
