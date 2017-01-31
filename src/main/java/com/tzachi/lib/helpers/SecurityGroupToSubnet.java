@@ -17,7 +17,7 @@ public class SecurityGroupToSubnet {
         sg2Ip.put("CiSecurityGroup", "10.0.0.20/24");
         sg2Ip.put("LogstashInnerSecurityGroup", "10.0.0.30/24");
         sg2Ip.put("WebSecurityGroup", "10.0.0.9/32");
-        sg2Ip.put("LbSecurityGroup", "11.0.0.0/24");
+        sg2Ip.put("LbSecurityGroup", "10.0.0.9/24");
         sg2Ip.put("default", "0.0.0.0/0");
     }
 

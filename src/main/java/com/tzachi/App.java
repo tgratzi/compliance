@@ -33,11 +33,11 @@ public class App {
     private static String formatMessage(String securityGroupName, AccessRequest accessRequest, String status) {
         StringBuffer errorMsg = new StringBuffer();
         errorMsg.append("----------------------------------------------------------------------").append('\n');
-        errorMsg.append("Status: ").append(status).append('\n');
-        errorMsg.append("Security Group: ").append(securityGroupName).append('\n');
-        errorMsg.append("Source: ").append(accessRequest.getSource()).append('\n');
-        errorMsg.append("Destination: ").append(accessRequest.getDestination()).append('\n');
-        errorMsg.append("Service: ").append(accessRequest.getService()).append('\n');
+        errorMsg.append("Status: ").append(status).append(", ");
+        errorMsg.append("Security Group: ").append(securityGroupName).append(", ");
+        errorMsg.append("Source: ").append(accessRequest.getSource()).append(", ");
+        errorMsg.append("Destination: ").append(accessRequest.getDestination()).append(", ");
+        errorMsg.append("Service: ").append(accessRequest.getService()).append("\n");
         errorMsg.append("----------------------------------------------------------------------").append('\n');
         return errorMsg.toString();
     }
@@ -61,7 +61,7 @@ public class App {
                     throw new IOException(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
                 }
                 statusMsg = "No violation found";
-                System.out.println(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
+                System.out.print(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
             }
         }
         System.out.println("Compliance check for AWS security groups pass with no violation");
@@ -85,7 +85,7 @@ public class App {
                 }
             }
             System.out.println("----------------------------------------------------------------------");
-            System.out.println(violationMsg.toString());
+            System.out.print(violationMsg.toString());
             System.out.println("----------------------------------------------------------------------");
         }
     }

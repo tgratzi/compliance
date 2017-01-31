@@ -1,6 +1,6 @@
 package com.tzachi.lib.helpers;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+
 import org.apache.http.entity.StringEntity;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.json.simple.JSONObject;
@@ -73,7 +73,6 @@ public class HttpHelper {
     }
 
     public JSONObject post(String uri, String body, String contentType) throws IOException {
-        System.out.println("Running post request");
         String url = MessageFormat.format(uri, host);
         CloseableHttpClient httpclient = getHttpsClient();
         CloseableHttpResponse response = null;
