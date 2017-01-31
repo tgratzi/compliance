@@ -32,13 +32,11 @@ public class App {
 
     private static String formatMessage(String securityGroupName, AccessRequest accessRequest, String status) {
         StringBuffer errorMsg = new StringBuffer();
-        errorMsg.append("----------------------------------------------------------------------").append('\n');
         errorMsg.append("Status: ").append(status).append(", ");
         errorMsg.append("Security Group: ").append(securityGroupName).append(", ");
         errorMsg.append("Source: ").append(accessRequest.getSource()).append(", ");
         errorMsg.append("Destination: ").append(accessRequest.getDestination()).append(", ");
         errorMsg.append("Service: ").append(accessRequest.getService()).append("\n");
-        errorMsg.append("----------------------------------------------------------------------").append('\n');
         return errorMsg.toString();
     }
 
@@ -70,7 +68,7 @@ public class App {
     private static void checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper,
                                                 ViolationHelper violation, String policyId) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        List<TagPolicyViolationsCheckRequest> instanceTagsList = cf.getTagPolicyViolationsCheckRequestList();
+        List<TagPolicyViolationsCheckRequest> instanceTagsList = cf.getInstancesTags();
         if (instanceTagsList.isEmpty()) {
             System.out.println("No Instance TAGs were found in the Cloudformation template");
         } else {
@@ -84,15 +82,12 @@ public class App {
                         violationMsg.append(tagViolation.toString()).append("\n");
                 }
             }
-            System.out.println("----------------------------------------------------------------------");
             System.out.print(violationMsg.toString());
-            System.out.println("----------------------------------------------------------------------");
         }
     }
 
     public static void main( String[] args ) throws IOException {
         try {
-            System.out.println("Hello World!");
             String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\blue-green-init.json";
             ViolationHelper violation = new ViolationHelper();
             System.out.println(String.format("Compliance check for Cloudformation template '%s'", "blue-green-init.json"));

@@ -23,16 +23,16 @@ public class CloudFormationTemplateProcessor {
     private final static Set<String> MANDATORY_TAG_KEYS = new HashSet<String>(Arrays.asList(new String[] {"ImageId", "Tags"}));
 
     private ObjectMapper objectMapper = new ObjectMapper();
-    private Map<String, List<SecurityGroup>> securityGroupRules;
     private final JsonNode jsonRoot;
-    private List<TagPolicyViolationsCheckRequest> tagPolicyViolationsCheckRequestList;
+    private Map<String, List<SecurityGroup>> securityGroupRules = new HashMap();
+    private List<TagPolicyViolationsCheckRequest> instancesTags = new ArrayList<TagPolicyViolationsCheckRequest>();
 
     public Map<String, List<SecurityGroup>> getSecurityGroupRules() {
         return securityGroupRules;
     }
 
-    public List<TagPolicyViolationsCheckRequest> getTagPolicyViolationsCheckRequestList() {
-        return tagPolicyViolationsCheckRequestList;
+    public List<TagPolicyViolationsCheckRequest> getInstancesTags() {
+        return instancesTags;
     }
 
     public CloudFormationTemplateProcessor(String file) throws IOException {
@@ -49,26 +49,21 @@ public class CloudFormationTemplateProcessor {
 
     private void processCF(JsonNode resourcesRoot) throws IOException {
         System.out.println("Processing Cloudformation security group");
-        Map<String, List<SecurityGroup>> securityGroups = new HashMap();
-        List<TagPolicyViolationsCheckRequest> tagPolicyList = new ArrayList<TagPolicyViolationsCheckRequest>();
         Iterator<Map.Entry<String, JsonNode>> fields = resourcesRoot.fields();
         while (fields.hasNext()) {
             Map.Entry<String, JsonNode> resourceNode = fields.next();
             JsonNode typeNode = resourceNode.getValue().get("Type");
             if (typeNode != null && SECURITY_GROUP_TYPE.equals(typeNode.textValue())) {
                 for (String securityGroupRuleType: SECURITY_GROUP_RULE_TYPES) {
-                    List<SecurityGroup> securityGroupRules = extractRule(resourceNode, securityGroupRuleType);
-                    if (securityGroupRules.isEmpty()) {
+                    List<SecurityGroup> rules = extractRule(resourceNode, securityGroupRuleType);
+                    if (rules.isEmpty())
                         continue;
-                    }
-                    securityGroups.put(resourceNode.getKey(), securityGroupRules);
+                    securityGroupRules.put(resourceNode.getKey(), rules);
                 }
             } else if (typeNode != null && INSTANCE_TYPE.equals(typeNode.textValue())) {
-                tagPolicyList.add(getTagFromInstance(resourceNode));
+                this.instancesTags.add(getTagFromInstance(resourceNode));
             }
         }
-        this.securityGroupRules = securityGroups;
-        this.tagPolicyViolationsCheckRequestList = tagPolicyList;
     }
 
     private List<SecurityGroup> extractRule(Map.Entry<String, JsonNode> resourceNode, String securityGroupRuleType) throws IOException {
