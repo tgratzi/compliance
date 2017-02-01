@@ -18,13 +18,15 @@ import java.util.*;
 public class CloudFormationTemplateProcessor {
     private final static String SECURITY_GROUP_TYPE = "AWS::EC2::SecurityGroup";
     private final static String INSTANCE_TYPE = "AWS::EC2::Instance";
-    private final static String[] SECURITY_GROUP_RULE_TYPES = {"SecurityGroupIngress", "SecurityGroupEgress"};
-    private final static Set<String> MANDATORY_SG_KEYS = new HashSet<String>(Arrays.asList(new String[] {"IpProtocol", "FromPort", "ToPort", "CidrIp"}));
-    private final static Set<String> MANDATORY_TAG_KEYS = new HashSet<String>(Arrays.asList(new String[] {"ImageId", "Tags"}));
+    private final static String SECURITY_GROUP_INGRESS = "SecurityGroupIngress";
+    private final static String SECURITY_GROUP_EGRESS = "SecurityGroupEgress";
+    private final static String CIDR_IP = "CidrIp";
+    private final static String REF = "Ref";
+    private final static String DEFAULT = "Default";
 
     private ObjectMapper objectMapper = new ObjectMapper();
     private final JsonNode jsonRoot;
-    private Map<String, List<SecurityGroup>> securityGroupRules = new HashMap();
+    private Map<String, List<SecurityGroup>> securityGroupRules = new HashMap<String, List<SecurityGroup>>();
     private List<TagPolicyViolationsCheckRequest> instancesTags = new ArrayList<TagPolicyViolationsCheckRequest>();
 
     public Map<String, List<SecurityGroup>> getSecurityGroupRules() {
@@ -54,11 +56,24 @@ public class CloudFormationTemplateProcessor {
             Map.Entry<String, JsonNode> resourceNode = fields.next();
             JsonNode typeNode = resourceNode.getValue().get("Type");
             if (typeNode != null && SECURITY_GROUP_TYPE.equals(typeNode.textValue())) {
-                for (String securityGroupRuleType: SECURITY_GROUP_RULE_TYPES) {
-                    List<SecurityGroup> rules = extractRule(resourceNode, securityGroupRuleType);
-                    if (rules.isEmpty())
-                        continue;
-                    securityGroupRules.put(resourceNode.getKey(), rules);
+                JsonNode securityIngressNode = resourceNode.getValue().findPath(SECURITY_GROUP_INGRESS);
+                JsonNode securityEgressNode = resourceNode.getValue().findPath(SECURITY_GROUP_EGRESS);
+                if (securityEgressNode.isNull() && securityIngressNode.isNull())
+                    break;
+
+                Map<String, JsonNode> securityGroupNodeTypes = new HashMap<String, JsonNode>();
+                securityGroupNodeTypes.put(SECURITY_GROUP_INGRESS, securityIngressNode);
+                securityGroupNodeTypes.put(SECURITY_GROUP_EGRESS, securityEgressNode);
+                for (Map.Entry<String, JsonNode> securityType: securityGroupNodeTypes.entrySet()) {
+                    if (! securityType.getValue().isNull()) {
+                        List<SecurityGroup> rules = extractRule(securityIngressNode, securityType.getKey());
+                        if (rules.isEmpty()) {
+//                            this.securityGroupRules = new HashMap<String, List<SecurityGroup>>();
+                            this.securityGroupRules.put(resourceNode.getKey(), rules);
+                            continue;
+                        }
+                        this.securityGroupRules.put(resourceNode.getKey(), rules);
+                    }
                 }
             } else if (typeNode != null && INSTANCE_TYPE.equals(typeNode.textValue())) {
                 this.instancesTags.add(getTagFromInstance(resourceNode));
@@ -66,30 +81,29 @@ public class CloudFormationTemplateProcessor {
         }
     }
 
-    private List<SecurityGroup> extractRule(Map.Entry<String, JsonNode> resourceNode, String securityGroupRuleType) throws IOException {
-//        System.out.println("Getting rule for security group type " + securityGroupRuleType);
-        JsonNode securityGroupNodes = resourceNode.getValue().findPath(securityGroupRuleType);
-        List<SecurityGroup> securityGroups = new ArrayList<SecurityGroup>();
+    private List<SecurityGroup> extractRule(JsonNode securityGroupNodes, String securityGroupRuleType) throws IOException {
+        List<SecurityGroup> rules = new ArrayList<SecurityGroup>();
         if (! securityGroupNodes.isNull()) {
             for (JsonNode securityGroupNode: securityGroupNodes){
-                JsonNode processedSecurityGroupNode = validateNode(securityGroupNode);
-                if (processedSecurityGroupNode.size() == 0) {
+                JsonNode securityGroupValues = getSecurityGroupValues(securityGroupNode);
+                if (securityGroupValues.size() == 0) {
                     System.out.println("Failed to process security group");
-                    continue;
+                    return (new ArrayList<SecurityGroup>());
                 }
                 try {
-                    SecurityGroup securityGroup = objectMapper.treeToValue(processedSecurityGroupNode, SecurityGroup.class);
-                    securityGroup.setDirection(securityGroupRuleType);
-                    securityGroups.add(securityGroup);
+                    SecurityGroup rule = objectMapper.treeToValue(securityGroupValues, SecurityGroup.class);
+                    rule.setDirection(securityGroupRuleType);
+                    rules.add(rule);
                 } catch(JsonProcessingException ex) {
                     throw new IOException ("Failed to parse security group, " + ex.getMessage());
                 }
             }
         }
-        return securityGroups;
+        return rules;
     }
 
-    private JsonNode validateNode(JsonNode securityGroupNode) throws IOException {
+    private JsonNode getSecurityGroupValues(JsonNode securityGroupNode) throws IOException {
+        //Iterate on every value in security group to get the value
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode root = mapper.createObjectNode();
         Iterator<Map.Entry<String, JsonNode>> items = securityGroupNode.fields();
@@ -97,10 +111,13 @@ public class CloudFormationTemplateProcessor {
             Map.Entry<String, JsonNode> item = items.next();
             String key = item.getKey();
             if (key.equalsIgnoreCase("SourceSecurityGroupId"))
-                key = "CidrIp";
+                key = CIDR_IP;
             JsonNode value = item.getValue();
             if (value instanceof ObjectNode) {
                 value = mapper.convertValue(getValueFromObject(value, key), JsonNode.class);
+                if (value.isNull()) {
+                    return value;
+                }
             } else if (key.equalsIgnoreCase("FromPort") || key.equalsIgnoreCase("ToPort")) {
                 int intVal = Integer.parseInt(value.textValue());
                 if (intVal < 0) {
@@ -121,23 +138,27 @@ public class CloudFormationTemplateProcessor {
             try {
                 return refObject.findValue(key).textValue();
             } catch (Exception ex) {
-                if (key.equalsIgnoreCase("CidrIp")) {
-                    return getValueFromObject(refObject.findValue("SourceSecurityGroupId"), "CidrIp");
+                if (key.equalsIgnoreCase(CIDR_IP)) {
+                    return getValueFromObject(refObject.findValue("SourceSecurityGroupId"), CIDR_IP);
                 }
             }
         }
-        System.out.println("Not found in security group");
+        System.out.println(String.format("The key '%s' was not found in security group", key));
         // If not found in security group type try find in parameters
         String value = "";
-        if (key.equalsIgnoreCase("CidrIp")) {
-            value = getCidrIp(refObject);
+        if (key.equalsIgnoreCase(CIDR_IP)) {
+            try {
+                value = getCidrIpFromParam(refObject);
+            } catch (NullPointerException ex) {
+                return "";
+            }
         }
         return value;
     }
 
-    private String getCidrIp(JsonNode cidrIpRefData) throws IOException{
-        if (cidrIpRefData.has("Default")) {
-            return cidrIpRefData.get("Default").textValue();
+    private String getCidrIpFromParam(JsonNode cidrIpRefData) throws IOException{
+        if (cidrIpRefData.has(DEFAULT)) {
+            return cidrIpRefData.get(DEFAULT).textValue();
         }
         String regex = cidrIpRefData.get("AllowedPattern").textValue();
         regex = regex.replaceAll("\\^| $|\\n |\\$", "");
@@ -180,9 +201,9 @@ public class CloudFormationTemplateProcessor {
     private String getImageId(JsonNode node) {
         JsonNode imageId = node.findPath("ImageId");
         if (imageId instanceof ObjectNode) {
-            String refValue = imageId.get("Ref").textValue();
+            String refValue = imageId.get(REF).textValue();
             JsonNode refObject = jsonRoot.findValue(refValue);
-            return refObject.findValue("Default").textValue();
+            return refObject.findValue(DEFAULT).textValue();
         }
         return node.textValue();
     }

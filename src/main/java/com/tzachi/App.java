@@ -40,12 +40,18 @@ public class App {
         return errorMsg.toString();
     }
 
-    private static void checkUspViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
+    private static Boolean checkUspViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
         Map<String, List<SecurityGroup>> securityGroupRules = cf.getSecurityGroupRules();
         if (securityGroupRules.isEmpty()) {
-            throw new IOException("Could not security group was found");
+            System.out.println("No security group found");
+            return false; //If no rules in security group no traffic is allowed
         }
         for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  securityGroupRules.entrySet()) {
+            if (securityGroupRule.getValue().isEmpty()) {
+                System.out.println(securityGroupRule);
+                System.out.println(String.format("Could not parse security group '%s'", securityGroupRule.getKey()));
+                return true;
+            }
             JaxbAccessRequestBuilder rule = new JaxbAccessRequestBuilder(securityGroupRule);
             for (AccessRequest ar: rule.getAccessRequestList()) {
                 System.out.println(ar.getService());
@@ -55,22 +61,23 @@ public class App {
                 SecurityPolicyViolationsForMultiArDTO violationMultiAr = violation.checkUSPAccessRequestViolation(stHelper, accessRequestStr);
                 String statusMsg;
                 if (violationMultiAr.getSecurityPolicyViolationsForAr().isViolated()) {
-                    statusMsg = "VIOLATION FOUND";
-                    throw new IOException(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
+                    System.out.println(formatMessage(securityGroupRule.getKey(), ar, "VIOLATION FOUND"));
+                    return true;
                 }
-                statusMsg = "No violation found";
-                System.out.print(formatMessage(securityGroupRule.getKey(), ar, statusMsg));
+                System.out.print(formatMessage(securityGroupRule.getKey(), ar, "No violation found"));
             }
         }
         System.out.println("Compliance check for AWS security groups pass with no violation");
+        return false;
     }
 
-    private static void checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper,
+    private static Boolean checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper,
                                                 ViolationHelper violation, String policyId) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         List<TagPolicyViolationsCheckRequest> instanceTagsList = cf.getInstancesTags();
         if (instanceTagsList.isEmpty()) {
             System.out.println("No Instance TAGs were found in the Cloudformation template");
+            return true;
         } else {
             StringBuffer violationMsg = new StringBuffer();
             for (TagPolicyViolationsCheckRequest instanceTags : instanceTagsList) {
@@ -80,23 +87,29 @@ public class App {
                 if (tagPolicyViolationsResponse.isViolated()) {
                     for (TagPolicyViolation tagViolation: tagPolicyViolationsResponse.getViolations())
                         violationMsg.append(tagViolation.toString()).append("\n");
+                    System.out.print(violationMsg.toString());
+                    return true;
                 }
             }
-            System.out.print(violationMsg.toString());
+            System.out.println("No instance TAG violation was found");
         }
+        return false;
     }
 
     public static void main( String[] args ) throws IOException {
         try {
-            String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\blue-green-init.json";
+            String filePath = "C:\\Program Files (x86)\\Jenkins\\workspace\\test\\aerospike-cf-hvm-private.json";
             ViolationHelper violation = new ViolationHelper();
             System.out.println(String.format("Compliance check for Cloudformation template '%s'", "blue-green-init.json"));
 //            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
 //            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
             HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
             CloudFormationTemplateProcessor cf = new CloudFormationTemplateProcessor(filePath);
-            checkUspViolation(cf, stHelper, violation);
-            checkTagPolicyViolation(cf, stHelper, violation, "tp-101");
+            if (checkUspViolation(cf, stHelper, violation)) {
+                System.exit(1);
+            }
+            if (checkTagPolicyViolation(cf, stHelper, violation, "tp-101"))
+                System.exit(1);
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         }

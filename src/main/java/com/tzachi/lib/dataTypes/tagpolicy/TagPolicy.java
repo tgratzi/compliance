@@ -67,7 +67,6 @@ public class TagPolicy {
                 m.put(tag, values);
             }
         }
-        System.out.println(m);
         return m;
     }
 }
