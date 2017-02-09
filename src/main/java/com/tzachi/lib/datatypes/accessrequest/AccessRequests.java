@@ -1,4 +1,4 @@
-package com.tzachi.lib.dataTypes.accessrequest;
+package com.tzachi.lib.datatypes.accessrequest;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

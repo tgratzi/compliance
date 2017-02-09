@@ -1,4 +1,4 @@
-package com.tzachi.lib.dataTypes.accessrequest;
+package com.tzachi.lib.datatypes.accessrequest;
 
 
 public abstract class AccessRequestAbstract {

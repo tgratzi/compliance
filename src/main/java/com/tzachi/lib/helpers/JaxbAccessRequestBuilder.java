@@ -1,9 +1,9 @@
 package com.tzachi.lib.helpers;
 
-import com.tzachi.lib.dataTypes.generic.PreDefinedService;
-import com.tzachi.lib.dataTypes.generic.Protocol;
-import com.tzachi.lib.dataTypes.securitygroup.SecurityGroup;
-import com.tzachi.lib.dataTypes.accessrequest.*;
+import com.tzachi.lib.datatypes.generic.PreDefinedService;
+import com.tzachi.lib.datatypes.generic.Protocol;
+import com.tzachi.lib.datatypes.securitygroup.SecurityGroup;
+import com.tzachi.lib.datatypes.accessrequest.*;
 import org.apache.commons.net.util.SubnetUtils;
 
 import javax.xml.bind.JAXBContext;

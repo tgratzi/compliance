@@ -1,4 +1,4 @@
-package com.tzachi.lib.dataTypes.tagpolicy;
+package com.tzachi.lib.datatypes.tagpolicy;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

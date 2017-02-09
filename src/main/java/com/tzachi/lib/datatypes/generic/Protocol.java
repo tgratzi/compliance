@@ -1,4 +1,4 @@
-package com.tzachi.lib.dataTypes.generic;
+package com.tzachi.lib.datatypes.generic;
 
 
 public enum Protocol {

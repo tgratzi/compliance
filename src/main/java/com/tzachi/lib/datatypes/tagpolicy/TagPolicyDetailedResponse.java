@@ -1,8 +1,8 @@
-package com.tzachi.lib.dataTypes.tagpolicy;
+package com.tzachi.lib.datatypes.tagpolicy;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tzachi.lib.dataTypes.generic.Elements;
+import com.tzachi.lib.datatypes.generic.Elements;
 import org.json.simple.JSONObject;
 
 import java.util.*;

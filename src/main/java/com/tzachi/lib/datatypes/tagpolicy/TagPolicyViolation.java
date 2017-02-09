@@ -1,14 +1,12 @@
-package com.tzachi.lib.dataTypes.tagpolicy;
+package com.tzachi.lib.datatypes.tagpolicy;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.tzachi.lib.dataTypes.generic.Attributes;
-import com.tzachi.lib.dataTypes.generic.Elements;
-import org.json.simple.JSONObject;
+import com.tzachi.lib.datatypes.generic.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.tzachi.lib.dataTypes.generic.Attributes.VALID_VALUES_REQUIREMENT_TYPE;
+import static com.tzachi.lib.datatypes.generic.Attributes.VALID_VALUES_REQUIREMENT_TYPE;
 
 /**
  * Created by tzachi.gratziani on 26/01/2017.
@@ -78,5 +76,9 @@ public class TagPolicyViolation {
             violationStr.append("Missing Tag: " + missingTag);
             return violationStr.toString();
         }
+    }
+
+    public String getRequirementSeverity() {
+        return requirementSeverity;
     }
 }

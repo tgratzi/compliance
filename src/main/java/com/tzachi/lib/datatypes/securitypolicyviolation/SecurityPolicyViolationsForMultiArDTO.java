@@ -1,11 +1,13 @@
-package com.tzachi.lib.dataTypes.securitypolicyviolation;
+package com.tzachi.lib.datatypes.securitypolicyviolation;
 
 
-import com.tzachi.lib.dataTypes.generic.Elements;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tzachi.lib.datatypes.generic.Elements;
 import org.json.simple.JSONObject;
 
 public class SecurityPolicyViolationsForMultiArDTO {
-    private SecurityPolicyViolationForArDTO securityPolicyViolationsForAr;
+    @JsonProperty("security_policy_violations_for_multi_ar")
+    public SecurityPolicyViolationForArDTO securityPolicyViolationsForAr;
 
     public SecurityPolicyViolationsForMultiArDTO(JSONObject json) {
 //        System.out.println(json.get(SECURITY_POLICY_VIOLATIONS_FOR_MULTI_AR));

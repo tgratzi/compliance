@@ -1,6 +1,6 @@
-package com.tzachi.lib.dataTypes.securitypolicyviolation;
+package com.tzachi.lib.datatypes.securitypolicyviolation;
 
-import com.tzachi.lib.dataTypes.generic.Elements;
+import com.tzachi.lib.datatypes.generic.Elements;
 import org.json.simple.JSONObject;
 
 

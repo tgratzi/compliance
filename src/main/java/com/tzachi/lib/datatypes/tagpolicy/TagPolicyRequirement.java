@@ -1,12 +1,10 @@
-package com.tzachi.lib.dataTypes.tagpolicy;
+package com.tzachi.lib.datatypes.tagpolicy;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.tzachi.lib.dataTypes.generic.Elements;
+import com.tzachi.lib.datatypes.generic.Elements;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 public class TagPolicyRequirement {

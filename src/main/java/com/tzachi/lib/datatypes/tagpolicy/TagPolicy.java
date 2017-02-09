@@ -1,13 +1,12 @@
-package com.tzachi.lib.dataTypes.tagpolicy;
+package com.tzachi.lib.datatypes.tagpolicy;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.tzachi.lib.dataTypes.generic.Elements;
+import com.tzachi.lib.datatypes.generic.Elements;
 
 import java.util.*;
 
-import static com.tzachi.lib.dataTypes.generic.Attributes.MANDATORY_REQUIREMENT_TYPE;
-import static com.tzachi.lib.dataTypes.generic.Attributes.VALID_VALUES_REQUIREMENT_TYPE;
+import static com.tzachi.lib.datatypes.generic.Attributes.MANDATORY_REQUIREMENT_TYPE;
+import static com.tzachi.lib.datatypes.generic.Attributes.VALID_VALUES_REQUIREMENT_TYPE;
 
 /**
  * Created by tzachi.gratziani on 28/01/2017.

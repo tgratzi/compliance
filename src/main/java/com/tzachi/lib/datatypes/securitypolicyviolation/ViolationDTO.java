@@ -1,4 +1,4 @@
-package com.tzachi.lib.dataTypes.securitypolicyviolation;
+package com.tzachi.lib.datatypes.securitypolicyviolation;
 
 import org.json.simple.JSONObject;
 

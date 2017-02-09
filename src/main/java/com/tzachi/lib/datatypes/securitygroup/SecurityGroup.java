@@ -1,4 +1,4 @@
-package com.tzachi.lib.dataTypes.securitygroup;
+package com.tzachi.lib.datatypes.securitygroup;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
