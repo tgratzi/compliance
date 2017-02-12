@@ -12,14 +12,13 @@ public class SecurityPolicyViolationForAr {
     private int access_request_order;
     private Violation violations;
 
-    public SecurityPolicyViolationForAr(JSONObject json) {
-        System.out.println("Parsing security policy violation for AR");
+    public SecurityPolicyViolationForAr(JsonNode json) {
         this.access_request_order = Integer.parseInt(json.get(Elements.ACCESS_REQUEST_ORDER).toString());
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode violations = mapper.convertValue(json.get(Elements.VIOLATIONS), JsonNode.class);
+        JsonNode violations = json.get(Elements.VIOLATIONS);
         if (violations.size() == 0) {
             this.violations = null;
         } else {
+            ObjectMapper mapper = new ObjectMapper();
             this.violations = mapper.convertValue(violations.get(VIOLATION), Violation.class);
         }
     }

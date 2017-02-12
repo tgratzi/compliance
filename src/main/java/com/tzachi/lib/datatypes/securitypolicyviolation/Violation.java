@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 
 public class Violation {
+    @JsonProperty("severity")
     private String severity;
 
     @JsonProperty("security_zone_matrix")
