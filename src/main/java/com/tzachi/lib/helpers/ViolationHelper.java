@@ -27,7 +27,6 @@ public class ViolationHelper {
     private static final String APPLICATION_XML = "application/xml";
     private static final String APPLICATION_JSON = "application/json";
 
-    private ObjectMapper objectMapper = new ObjectMapper();
     private Logger logger;
 
     public ViolationHelper() {

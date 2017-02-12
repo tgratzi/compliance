@@ -1,9 +1,9 @@
 package com.tzachi.lib.datatypes.securitypolicyviolation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tzachi.lib.datatypes.generic.Elements;
-import org.json.simple.JSONObject;
 
 import static com.tzachi.lib.datatypes.generic.Elements.VIOLATION;
 
@@ -20,6 +20,11 @@ public class SecurityPolicyViolationForAr {
         } else {
             ObjectMapper mapper = new ObjectMapper();
             this.violations = mapper.convertValue(violations.get(VIOLATION), Violation.class);
+            try {
+                System.out.println(mapper.writeValueAsString(this.violations));
+            } catch (JsonProcessingException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 
