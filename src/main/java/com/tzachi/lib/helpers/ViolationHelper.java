@@ -5,7 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tzachi.lib.datatypes.accessrequest.AccessRequest;
 import com.tzachi.lib.datatypes.generic.Severity;
 import com.tzachi.lib.datatypes.securitygroup.SecurityGroup;
-import com.tzachi.lib.datatypes.securitypolicyviolation.SecurityPolicyViolationsForMultiArDTO;
+import com.tzachi.lib.datatypes.securitypolicyviolation.SecurityPolicyViolationsForMultiAr;
+import com.tzachi.lib.datatypes.securitypolicyviolation.Violation;
 import com.tzachi.lib.datatypes.tagpolicy.TagPolicyDetailedResponse;
 import com.tzachi.lib.datatypes.tagpolicy.TagPolicyViolation;
 import com.tzachi.lib.datatypes.tagpolicy.TagPolicyViolationsCheckRequest;
@@ -38,14 +39,11 @@ public class ViolationHelper {
         this.logger = complianceLog.getLogger();
     }
 
-    public SecurityPolicyViolationsForMultiArDTO checkUSPAccessRequestViolation(HttpHelper stHelper, String str) throws IOException{
+    public SecurityPolicyViolationsForMultiAr checkUSPAccessRequestViolation(HttpHelper stHelper, String str) throws IOException{
         System.out.println("Checking USP access request violation");
-        SecurityPolicyViolationsForMultiArDTO violationMultiAr = null;
+        SecurityPolicyViolationsForMultiAr violationMultiAr = null;
         JSONObject response = stHelper.post(USP_URL, str, APPLICATION_XML);
-        violationMultiAr = new SecurityPolicyViolationsForMultiArDTO(response);
-//        JsonNode value = objectMapper.convertValue(response.toString(), JsonNode.class);
-//        SecurityPolicyViolationsForMultiArDTO ar = objectMapper.treeToValue(value, SecurityPolicyViolationsForMultiArDTO.class);
-//        System.out.print(ar);
+        violationMultiAr = new SecurityPolicyViolationsForMultiAr(response);
         return violationMultiAr;
     }
 
@@ -78,31 +76,35 @@ public class ViolationHelper {
         return bufferMsg.toString();
     }
 
-    public Boolean checkUspViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
+    public int checkUspViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper, ViolationHelper violation) throws IOException {
         System.out.println("Running compliance check for AWS security group");
+        int severityLevel = 0;
         Map<String, List<SecurityGroup>> securityGroupRules = cf.getSecurityGroupRules();
         if (securityGroupRules.isEmpty()) {
             System.out.println("No security group found");
-            return false; //If no rules in security group no traffic is allowed
+            return severityLevel; //If no rules in security group no traffic is allowed
         }
         for(Map.Entry<String, List<SecurityGroup>> securityGroupRule :  securityGroupRules.entrySet()) {
             if (securityGroupRule.getValue().isEmpty()) {
                 System.out.println(String.format("Could not parse security group '%s'", securityGroupRule.getKey()));
-                return true;
+                return severityLevel;
             }
             String direction = securityGroupRule.getValue().get(0).getDirection();
             JaxbAccessRequestBuilder rule = new JaxbAccessRequestBuilder(securityGroupRule);
             for (AccessRequest ar: rule.getAccessRequestList()) {
                 String accessRequestStr = rule.accessRequestBuilder(ar);
-                SecurityPolicyViolationsForMultiArDTO violationMultiAr = violation.checkUSPAccessRequestViolation(stHelper, accessRequestStr);
+                SecurityPolicyViolationsForMultiAr violationMultiAr = violation.checkUSPAccessRequestViolation(stHelper, accessRequestStr);
                 if (violationMultiAr.getSecurityPolicyViolationsForAr().isViolated()) {
+                    Violation violationResult = violationMultiAr.getSecurityPolicyViolationsForAr().getViolations();
+                    int violatedSeverity = Severity.getSeverityValueByName(violationResult.getSeverity().toUpperCase());
+                    severityLevel =  violatedSeverity > severityLevel ? violatedSeverity : severityLevel;
                     System.out.println(formatMessage(securityGroupRule.getKey(), direction, ar, "VIOLATION FOUND"));
-                    return true;
+                    return severityLevel;
                 }
             }
         }
         System.out.println("USP compliance check for AWS security groups pass successfully");
-        return false;
+        return severityLevel;
     }
 
     public int checkTagPolicyViolation(CloudFormationTemplateProcessor cf, HttpHelper stHelper,

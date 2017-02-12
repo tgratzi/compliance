@@ -31,6 +31,7 @@ public class App {
         try {
             String severity = "critical";
             String environment = "production";
+            int severityLevel = 0;
             //            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
             //            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
             HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
@@ -60,10 +61,12 @@ public class App {
                         continue;
                     }
                     if (cf.getIsCloudformation()) {
-                        if (violation.checkUspViolation(cf, stHelper, violation)) {
+                        severityLevel = violation.checkUspViolation(cf, stHelper, violation);
+                        if (environment.equalsIgnoreCase(PROD_ENVIRONMENT) && severityLevel >= Severity.getSeverityValueByName(severity.toUpperCase())) {
+                            System.out.println("Exit");
                             System.exit(1);
                         }
-                        int severityLevel = violation.checkTagPolicyViolation(cf, stHelper, violation, "tp-101");
+                        severityLevel = violation.checkTagPolicyViolation(cf, stHelper, violation, "tp-101");
                         if (environment.equalsIgnoreCase(PROD_ENVIRONMENT) && severityLevel >= Severity.getSeverityValueByName(severity.toUpperCase())) {
                             System.out.println("Exit");
                             System.exit(1);

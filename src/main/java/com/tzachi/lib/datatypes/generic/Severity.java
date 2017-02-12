@@ -3,6 +3,7 @@ package com.tzachi.lib.datatypes.generic;
 
 public enum Severity {
     CRITICAL("critical", 3),
+    HIGH("high", 3),
     MEDIUM("medium", 2),
     LOW("low", 1);
 
@@ -16,7 +17,6 @@ public enum Severity {
 
     public static int getSeverityValueByName(String key) {
         for (Severity severity : Severity.values()) {
-            System.out.println(severity);
             if (severity.getSeverity().equalsIgnoreCase(key)) {
                 return severity.getNum();
             }
