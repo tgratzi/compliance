@@ -24,12 +24,20 @@ public class TagPolicyDetailedResponse {
         }
     }
 
-    public Map<String, String> getAllPolicyId() {
+    public Map<String, String> getPolicies() {
         Map<String, String> policyNameId = new HashMap<String, String>();
         for (TagPolicy result: results) {
             policyNameId.put(result.getPolicyName(), result.getPolicyId());
         }
         return policyNameId;
+    }
+
+    public Map<String, String> getAllPolicyId() {
+        Map<String, String> policyIds = new HashMap<String, String>();
+        for (TagPolicy result: results) {
+            policyIds.put(result.getPolicyName(), result.getPolicyId());
+        }
+        return policyIds;
     }
 
     public Set<String> getTagsByPolicyId(String policyId) {

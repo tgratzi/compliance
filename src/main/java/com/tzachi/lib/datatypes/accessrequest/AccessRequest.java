@@ -2,7 +2,15 @@ package com.tzachi.lib.datatypes.accessrequest;
 
 import javax.xml.bind.annotation.*;
 
-
+/**
+ * Access request representation
+ *
+ * Hold access request information and generate XML
+ * The source, destination and service will get AccessRequest abstract class in order to able to represent the
+ * XSI:type during the XML creation. This achieved by assign different data type during the initialization.
+ *
+ * @author Tufin PS-Dev support@tufin.com
+ */
 public class AccessRequest {
     @XmlElement(name = "use_topology")
     public String useTopology;
