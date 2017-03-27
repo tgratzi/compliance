@@ -30,15 +30,11 @@ public class AccessRequest {
     @XmlElement(name = "action")
     private String action = "ACCEPT";
 
-    public void setSource(String ip, String mask) {
-        IPNetwork src = new IPNetwork();
-        src.setNetwork(ip, mask);
+    public <T extends AccessRequestAbstract> void setSource(T src) {
         this.source = src;
     }
 
-    public void setDestination(String ip, String mask) {
-        IPNetwork dst = new IPNetwork();
-        dst.setNetwork(ip, mask);
+    public <T extends AccessRequestAbstract> void setDestination(T dst) {
         this.dest = dst;
     }
 

@@ -11,7 +11,7 @@ import static com.tzachi.lib.datatypes.generic.Elements.SECURITY_POLICY_VIOLATIO
 
 public class SecurityPolicyViolationsForMultiAr {
     @JsonProperty("security_policy_violations_for_multi_ar")
-    public SecurityPolicyViolationForAr securityPolicyViolationsForAr;
+    private SecurityPolicyViolationForAr securityPolicyViolationsForAr;
 
     public SecurityPolicyViolationsForMultiAr(JSONObject json) {
         ObjectMapper mapper = new ObjectMapper();

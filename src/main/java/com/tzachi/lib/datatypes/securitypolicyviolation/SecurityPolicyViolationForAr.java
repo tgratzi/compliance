@@ -5,12 +5,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tzachi.lib.datatypes.generic.Elements;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.tzachi.lib.datatypes.generic.Elements.VIOLATION;
 
 
 public class SecurityPolicyViolationForAr {
     private int access_request_order;
-    private Violation violations;
+    private List<Violation> violations = new ArrayList<>();
 
     public SecurityPolicyViolationForAr(JsonNode json) {
         this.access_request_order = Integer.parseInt(json.get(Elements.ACCESS_REQUEST_ORDER).toString());
@@ -19,16 +22,19 @@ public class SecurityPolicyViolationForAr {
             this.violations = null;
         } else {
             ObjectMapper mapper = new ObjectMapper();
-            this.violations = mapper.convertValue(violations.get(VIOLATION), Violation.class);
-            try {
-                System.out.println(mapper.writeValueAsString(this.violations));
-            } catch (JsonProcessingException ex) {
-                ex.printStackTrace();
+            for (JsonNode node: violations.get(VIOLATION)) {
+                Violation violation = mapper.convertValue(node, Violation.class);
+                this.violations.add(violation);
+//                try {
+//                    System.out.println(mapper.writeValueAsString(violation));
+//                } catch (JsonProcessingException ex) {
+//                    ex.printStackTrace();
+//                }
             }
         }
     }
 
-    public Violation getViolations() {
+    public List<Violation> getViolations() {
         return violations;
     }
 

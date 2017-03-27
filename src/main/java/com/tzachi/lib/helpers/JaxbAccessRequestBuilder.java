@@ -29,11 +29,11 @@ public class JaxbAccessRequestBuilder {
             try {
                 SubnetUtils network = new SubnetUtils(rule.getCidrIP());
                 if (SecurityGroup.INGRESS.equalsIgnoreCase(rule.getDirection())) {
-                    accessRequest.setSource(network.getInfo().getAddress(), network.getInfo().getNetmask());
-                    accessRequest.setDestination(sgNet.getInfo().getAddress(), sgNet.getInfo().getNetmask());
+                    accessRequest.setSource(new IPNetwork(network.getInfo().getAddress(), network.getInfo().getNetmask()));
+                    accessRequest.setDestination(new SecurityGroupName(securityGroupMap.getKey()));
                 } else {
-                    accessRequest.setSource(sgNet.getInfo().getAddress(), sgNet.getInfo().getNetmask());
-                    accessRequest.setDestination(network.getInfo().getAddress(), network.getInfo().getNetmask());
+                    accessRequest.setSource(new SecurityGroupName(securityGroupMap.getKey()));
+                    accessRequest.setDestination(new IPNetwork(network.getInfo().getAddress(), network.getInfo().getNetmask()));
                 }
             } catch (IllegalArgumentException ex) {
                 throw new IOException("CIDR/IP parameter is invalid, Error " + ex.getMessage());
@@ -64,7 +64,8 @@ public class JaxbAccessRequestBuilder {
                     AccessRequest.class,
                     IPNetwork.class,
                     RawNetworkSubnet.class,
-                    ImplicitService.class);
+                    ImplicitService.class,
+                    SecurityGroupName.class);
             Marshaller m = context.createMarshaller();
             m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
             m.marshal(accessRequests, accessRequestStr);

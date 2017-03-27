@@ -35,9 +35,9 @@ public class App {
         int severityLevel = 0;
         boolean is_processed = false;
         try {
-            //            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
-            //            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
-            HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
+            HttpHelper stHelper = new HttpHelper("192.168.204.161", "tzachi", "tzachi");
+//            HttpHelper stHelper = new HttpHelper("192.168.1.66", "adam", "adam");
+//            HttpHelper stHelper = new HttpHelper("hydra", "adam", "adam");
             Map<String, String> policyIDs = new ViolationHelper().getTagPolicies(stHelper).getPolicies();
             if (! policyIDs.isEmpty()) {
                 String policyId = policyIDs.entrySet().iterator().next().getValue();

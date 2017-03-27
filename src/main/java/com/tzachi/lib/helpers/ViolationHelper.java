@@ -94,11 +94,13 @@ public class ViolationHelper {
                 String accessRequestStr = rule.accessRequestBuilder(ar);
                 SecurityPolicyViolationsForMultiAr violationMultiAr = getUSPAccessRequestViolation(stHelper, accessRequestStr);
                 if (violationMultiAr.getSecurityPolicyViolationsForAr().isViolated()) {
-                    Violation violationResult = violationMultiAr.getSecurityPolicyViolationsForAr().getViolations();
-                    int violatedSeverity = Severity.getSeverityValueByName(violationResult.getSeverity().toUpperCase());
-                    severityLevel =  violatedSeverity > severityLevel ? violatedSeverity : severityLevel;
-                    System.out.println(formatMessage(securityGroupRule.getKey(), direction, ar, "VIOLATION FOUND"));
-                    return severityLevel;
+                    List<Violation> violationResults = violationMultiAr.getSecurityPolicyViolationsForAr().getViolations();
+                    for (Violation violation: violationResults) {
+                        int violatedSeverity = Severity.getSeverityValueByName(violation.getSeverity().toUpperCase());
+                        severityLevel =  violatedSeverity > severityLevel ? violatedSeverity : severityLevel;
+                        System.out.println(formatMessage(securityGroupRule.getKey(), direction, ar, "VIOLATION FOUND"));
+                        return severityLevel;
+                    }
                 }
             }
         }

@@ -11,7 +11,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AccessRequests {
     @XmlElement(name = "access_request")
-    private List<AccessRequest> accessRequests = new ArrayList<AccessRequest>();
+    private List<AccessRequest> accessRequests = new ArrayList<>();
 
     public List<AccessRequest> getAccessRequests() {
         return accessRequests;
