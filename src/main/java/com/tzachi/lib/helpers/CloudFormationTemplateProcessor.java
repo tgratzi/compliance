@@ -77,7 +77,7 @@ public class CloudFormationTemplateProcessor {
                         if (securityType.getValue().size() != 0) {
                             List<SecurityGroup> rules = extractRule(securityType.getValue(), securityType.getKey());
                             if (rules.isEmpty()) {
-                                //                            this.securityGroupRules = new HashMap<String, List<SecurityGroup>>();
+                                System.out.println(String.format("Failed to process security group '%s'", resourceNode.getKey()));
                                 this.securityGroupRules.put(resourceNode.getKey(), rules);
                                 continue;
                             }
@@ -97,7 +97,6 @@ public class CloudFormationTemplateProcessor {
             for (JsonNode securityGroupNode: securityGroupNodes){
                 JsonNode securityGroupValues = getSecurityGroupValues(securityGroupNode);
                 if (securityGroupValues == null || securityGroupValues.size() == 0) {
-                    System.out.println("Failed to process security group");
                     return (new ArrayList<SecurityGroup>());
                 }
                 try {
@@ -143,28 +142,33 @@ public class CloudFormationTemplateProcessor {
         // looking first in security group type and next in parameter to find the real value
         String refValue = node.get("Ref").textValue();
         JsonNode refObject = jsonRoot.findValue(refValue);
-        JsonNode nodeType = refObject.get("Type");
-        //First check if object reference is SecurityGroup resource
-        if (nodeType.textValue().equalsIgnoreCase(SECURITY_GROUP_TYPE)) {
-            try {
-                return refObject.findValue(key).textValue();
-            } catch (Exception ex) {
-                if (key.equalsIgnoreCase(CIDR_IP)) {
-                    return getValueFromObject(refObject.findValue("SourceSecurityGroupId"), CIDR_IP);
+        if (refObject != null) {
+            JsonNode nodeType = refObject.get("Type");
+            //First check if object reference is SecurityGroup resource
+            if (nodeType.textValue().equalsIgnoreCase(SECURITY_GROUP_TYPE)) {
+                try {
+                    return refObject.findValue(key).textValue();
+                } catch (Exception ex) {
+                    if (key.equalsIgnoreCase(CIDR_IP)) {
+                        return getValueFromObject(refObject.findValue("SourceSecurityGroupId"), CIDR_IP);
+                    }
                 }
             }
-        }
-        System.out.println(String.format("The key '%s' was not found in security group", key));
-        // If not found in security group type try find in parameters
-        String value = "";
-        if (key.equalsIgnoreCase(CIDR_IP)) {
-            try {
-                value = getCidrIpFromParam(refObject);
-            } catch (NullPointerException ex) {
-                throw new IOException("Failed to get CIDR/IP value");
+
+            System.out.println(String.format("The key '%s' was not found in security group", key));
+            // If not found in security group type try find in parameters
+            String value = "";
+            if (key.equalsIgnoreCase(CIDR_IP)) {
+                try {
+                    value = getCidrIpFromParam(refObject);
+                } catch (NullPointerException ex) {
+//                    throw new IOException("Failed to get CIDR/IP value");
+                    return null;
+                }
             }
+            return value;
         }
-        return value;
+        return null;
     }
 
     /**

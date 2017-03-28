@@ -21,7 +21,6 @@ public class JaxbAccessRequestBuilder {
     public JaxbAccessRequestBuilder() {}
 
     public JaxbAccessRequestBuilder(Map.Entry<String, List<SecurityGroup>> securityGroupMap) throws IOException {
-        SubnetUtils sgNet = SecurityGroupToSubnet.getIP(securityGroupMap.getKey());
         for (SecurityGroup rule: securityGroupMap.getValue()) {
             AccessRequest accessRequest = new AccessRequest();
             accessRequest.useTopology = "false";
