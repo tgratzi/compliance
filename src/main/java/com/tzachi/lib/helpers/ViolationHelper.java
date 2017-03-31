@@ -29,9 +29,7 @@ public class ViolationHelper {
 
     private Logger logger;
 
-    public ViolationHelper() {
-        logger = Logger.getLogger(ViolationHelper.class.getName());
-    }
+    public ViolationHelper() {}
 
     public ViolationHelper(Level level, OutputStream outputStream) {
         BuildComplianceLog complianceLog = new BuildComplianceLog(getClass().getName(), level, outputStream);

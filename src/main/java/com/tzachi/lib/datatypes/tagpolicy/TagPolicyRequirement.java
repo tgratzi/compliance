@@ -17,7 +17,12 @@ public class TagPolicyRequirement {
     public TagPolicyRequirement(JsonNode node) {
         this.requirementName = node.get(Elements.REQUIREMENT_NAME).textValue();
         this.requirementType = node.get(Elements.REQUIREMENT_TYPE).textValue();
-        this.requirementDescription = node.get(Elements.REQUIREMENT_DESCRIPTION).textValue();
+        try {
+            this.requirementDescription = node.get(Elements.REQUIREMENT_DESCRIPTION).textValue();
+        } catch (NullPointerException ex) {
+            this.requirementDescription = "";
+        }
+
     }
 
     public String getRequirementType() {
